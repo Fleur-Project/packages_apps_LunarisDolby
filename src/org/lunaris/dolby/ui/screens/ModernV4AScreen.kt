@@ -44,6 +44,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.rounded.Check
@@ -52,6 +53,7 @@ import androidx.compose.material.icons.rounded.SpatialAudio
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -92,6 +94,7 @@ import org.lunaris.dolby.viper.effect.EffectState
 import org.lunaris.dolby.viper.ui.screens.debug.DebugLogDialog
 import org.lunaris.dolby.viper.ui.screens.device.DeviceDialog
 import org.lunaris.dolby.viper.ui.screens.main.*
+import org.lunaris.dolby.viper.ui.components.ConfirmDialog
 import org.lunaris.dolby.viper.ui.screens.preset.PresetDialog
 import org.lunaris.dolby.viper.ui.screens.settings.ExcludedAppsDialog
 import org.lunaris.dolby.viper.ui.screens.settings.SettingsDialog
@@ -121,6 +124,7 @@ fun ModernV4AScreen(
     val excludedApps by viewModel.excludedApps.collectAsStateWithLifecycle()
 
     var showPresetDialog by remember { mutableStateOf(false) }
+    var showResetAllConfirm by remember(state.activeDeviceId) { mutableStateOf(false) }
     var showDriverStatusDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
@@ -172,6 +176,20 @@ fun ModernV4AScreen(
                 }
             },
             onDismiss = { showPresetDialog = false },
+        )
+    }
+
+    if (showResetAllConfirm) {
+        ConfirmDialog(
+            title = stringResource(R.string.reset_all_effects_title),
+            body = stringResource(R.string.reset_all_effects_confirm, state.activeDeviceName),
+            confirmLabel = stringResource(R.string.action_reset),
+            destructive = true,
+            onConfirm = {
+                viewModel.resetAllEffects()
+                showResetAllConfirm = false
+            },
+            onDismiss = { showResetAllConfirm = false },
         )
     }
 
@@ -335,34 +353,48 @@ fun ModernV4AScreen(
             label = "effectListAlpha",
         )
 
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
-            state = listState,
-            contentPadding = PaddingValues(
-                start = 20.dp,
-                top = 12.dp,
-                end = 20.dp,
-                bottom = 12.dp + bottomPadding,
-            ),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            item {
-                DolbyPageHeading(
-                    title = stringResource(R.string.v4a_title),
-                    subtitle = stringResource(R.string.v4a_subtitle),
-                )
+            OutlinedButton(
+                onClick = { showResetAllConfirm = true },
+                enabled = state.activeDeviceId.isNotEmpty(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
+            ) {
+                Icon(Icons.Default.RestartAlt, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(stringResource(R.string.action_reset_all_effects))
             }
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                state = listState,
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    top = 12.dp,
+                    end = 20.dp,
+                    bottom = 12.dp + bottomPadding,
+                ),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                item {
+                    DolbyPageHeading(
+                        title = stringResource(R.string.v4a_title),
+                        subtitle = stringResource(R.string.v4a_subtitle),
+                    )
+                }
 
-            item {
-                V4AMainCard(
-                    enabled = state.masterEnable,
-                    activeDeviceName = state.activeDeviceName,
-                    driverStatus = driverStatus,
-                    onEnabledChange = { viewModel.setMasterEnabled(it) },
-                )
-            }
+                item {
+                    V4AMainCard(
+                        enabled = state.masterEnable,
+                        activeDeviceName = state.activeDeviceName,
+                        driverStatus = driverStatus,
+                        onEnabledChange = { viewModel.setMasterEnabled(it) },
+                    )
+                }
 
             // Virtualized effect section items
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { MasterLimiterRows(state, viewModel) } }
@@ -389,6 +421,7 @@ fun ModernV4AScreen(
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AuditoryProtectionSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AnalogXSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { SpeakerOptSection(state, viewModel) } }
+            }
         }
     }
 }

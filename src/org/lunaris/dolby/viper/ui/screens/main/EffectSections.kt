@@ -8,6 +8,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,6 +50,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
@@ -128,6 +130,7 @@ fun EffectSection(
     title: String,
     enabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
+    onReset: () -> Unit,
     descriptionRes: Int,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
@@ -207,6 +210,12 @@ fun EffectSection(
                     },
                     modifier = Modifier.weight(1f),
                 )
+                IconButton(onClick = onReset) {
+                    Icon(
+                        imageVector = Icons.Default.RestartAlt,
+                        contentDescription = stringResource(R.string.action_reset_effect, title),
+                    )
+                }
                 if (hasEnableSwitch) {
                     Switch(
                         checked = enabled,
@@ -286,6 +295,7 @@ fun MasterLimiterRows(
         title = stringResource(R.string.section_master_limiter),
         enabled = true,
         onEnabledChange = {},
+        onReset = { viewModel.resetEffect(Effects.masterLimiter) },
         descriptionRes = R.string.effect_desc_master_limiter,
         icon = Icons.Default.Tune,
         hasEnableSwitch = false,
@@ -353,6 +363,7 @@ fun PlaybackGainSection(
         title = stringResource(R.string.section_agc),
         enabled = enabled,
         onEnabledChange = viewModel::setPlaybackGainControlEnabled,
+        onReset = { viewModel.resetEffect(Effects.playbackGainControl) },
         descriptionRes = R.string.effect_desc_playback_gain_control,
         icon = Icons.AutoMirrored.Filled.TrendingUp,
     ) {
@@ -427,6 +438,7 @@ fun LUFSTargetingSection(
         title = stringResource(R.string.section_lufs_targeting),
         enabled = enabled,
         onEnabledChange = viewModel::setLufsEnabled,
+        onReset = { viewModel.resetEffect(Effects.lufs) },
         descriptionRes = R.string.effect_desc_lufs_targeting,
         icon = Icons.Default.CrisisAlert,
     ) {
@@ -508,6 +520,7 @@ fun FetCompressorSection(
         title = stringResource(R.string.section_fet_compressor),
         enabled = enabled,
         onEnabledChange = viewModel::setFetCompressorEnabled,
+        onReset = { viewModel.resetEffect(Effects.fetCompressor) },
         descriptionRes = R.string.effect_desc_fet_compressor,
         icon = Icons.Default.VerticalAlignCenter,
     ) {
@@ -825,6 +838,7 @@ fun MultibandCompressorSection(
         title = stringResource(R.string.section_multiband_compressor),
         enabled = enabled,
         onEnabledChange = viewModel::setMultibandCompressorEnabled,
+        onReset = { viewModel.resetEffect(Effects.multibandCompressor) },
         descriptionRes = R.string.effect_desc_multiband_compressor,
         icon = Icons.Default.Compress,
     ) {
@@ -1099,6 +1113,7 @@ fun DdcSection(
         title = stringResource(R.string.section_ddc),
         enabled = enabled,
         onEnabledChange = viewModel::setDdcEnabled,
+        onReset = { viewModel.resetEffect(Effects.ddc) },
         descriptionRes = R.string.effect_desc_ddc,
         icon = Icons.Default.SettingsInputComponent,
     ) {
@@ -1129,6 +1144,7 @@ fun SpectrumExtensionSection(
         title = stringResource(R.string.section_spectrum_extension),
         enabled = enabled,
         onEnabledChange = viewModel::setSpectrumExtensionEnabled,
+        onReset = { viewModel.resetEffect(Effects.spectrumExtension) },
         descriptionRes = R.string.effect_desc_spectrum_extension,
         icon = Icons.Default.Waves,
     ) {
@@ -1194,6 +1210,7 @@ fun EqualizerSection(
         title = stringResource(R.string.section_equalizer),
         enabled = enabled,
         onEnabledChange = onEnabledChange,
+        onReset = { viewModel.resetEffect(Effects.equalizer) },
         descriptionRes = R.string.effect_desc_equalizer,
         icon = Icons.Default.Equalizer,
     ) {
@@ -1291,6 +1308,7 @@ fun DynamicEqSection(
         title = stringResource(R.string.section_dynamic_eq),
         enabled = enabled,
         onEnabledChange = viewModel::setDynamicEqEnabled,
+        onReset = { viewModel.resetEffect(Effects.dynamicEq) },
         descriptionRes = R.string.effect_desc_dynamic_eq,
         icon = Icons.Default.Insights,
     ) {
@@ -1492,6 +1510,7 @@ fun ConvolverSection(
         title = stringResource(R.string.section_convolver),
         enabled = enabled,
         onEnabledChange = viewModel::setConvolverEnabled,
+        onReset = { viewModel.resetEffect(Effects.convolver) },
         descriptionRes = R.string.effect_desc_convolver,
         icon = Icons.Default.BlurCircular,
     ) {
@@ -1537,6 +1556,7 @@ fun FieldSurroundSection(
         title = stringResource(R.string.section_field_surround),
         enabled = enabled,
         onEnabledChange = viewModel::setFieldSurroundEnabled,
+        onReset = { viewModel.resetEffect(Effects.fieldSurround) },
         descriptionRes = R.string.effect_desc_field_surround,
         icon = Icons.Default.SurroundSound,
     ) {
@@ -1608,6 +1628,7 @@ fun DiffSurroundSection(
         title = stringResource(R.string.section_diff_surround),
         enabled = enabled,
         onEnabledChange = viewModel::setDiffSurroundEnabled,
+        onReset = { viewModel.resetEffect(Effects.diffSurround) },
         descriptionRes = R.string.effect_desc_diff_surround,
         icon = Icons.Default.SpatialAudio,
     ) {
@@ -1683,6 +1704,7 @@ fun StereoImagerSection(
         title = stringResource(R.string.section_stereo_imager),
         enabled = enabled,
         onEnabledChange = viewModel::setStereoImagerEnabled,
+        onReset = { viewModel.resetEffect(Effects.stereoImager) },
         descriptionRes = R.string.effect_desc_stereo_imager,
         icon = Icons.Default.AspectRatio,
     ) {
@@ -1779,6 +1801,7 @@ fun HeadphoneSurroundSection(
         title = stringResource(R.string.section_headphone_surround),
         enabled = enabled,
         onEnabledChange = viewModel::setHeadphoneSurroundEnabled,
+        onReset = { viewModel.resetEffect(Effects.headphoneSurround) },
         descriptionRes = R.string.effect_desc_headphone_surround,
         icon = Icons.Default.Headphones,
     ) {
@@ -1816,6 +1839,7 @@ fun ReverberationSection(
         title = stringResource(R.string.section_reverb),
         enabled = enabled,
         onEnabledChange = viewModel::setReverbEnabled,
+        onReset = { viewModel.resetEffect(Effects.reverb) },
         descriptionRes = R.string.effect_desc_reverb,
         icon = Icons.Default.BlurOn,
     ) {
@@ -1929,6 +1953,7 @@ fun DynamicSystemSection(
         title = stringResource(R.string.section_dynamic_system),
         enabled = enabled,
         onEnabledChange = viewModel::setDynamicSystemEnabled,
+        onReset = { viewModel.resetEffect(Effects.dynamicSystem) },
         descriptionRes = R.string.effect_desc_dynamic_system,
         icon = Icons.Default.CandlestickChart,
     ) {
@@ -1942,7 +1967,7 @@ fun DynamicSystemSection(
             onOptionSelected = { index, _ -> onPresetSelect(dsPresets[index].id) },
         )
 
-        Row(
+        FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(DynamicSystemButtonSpacing),
         ) {
@@ -1970,7 +1995,7 @@ fun DynamicSystemSection(
                     modifier = Modifier.size(DynamicSystemButtonIconSize),
                 )
                 Spacer(modifier = Modifier.width(DynamicSystemButtonIconSpacing))
-                Text(stringResource(R.string.action_reset))
+                Text(stringResource(R.string.action_reset_coefficients))
             }
         }
 
@@ -2144,6 +2169,7 @@ fun TubeSimulatorSection(
         title = stringResource(R.string.section_tube_simulator),
         enabled = enabled,
         onEnabledChange = viewModel::setTubeSimulatorEnabled,
+        onReset = { viewModel.resetEffect(Effects.tubeSimulator) },
         descriptionRes = R.string.effect_desc_tube_simulator,
         icon = Icons.Default.MusicNote,
     ) {
@@ -2212,6 +2238,7 @@ fun PsychoacousticBassSection(
         title = stringResource(R.string.section_psycho_bass),
         enabled = enabled,
         onEnabledChange = viewModel::setPsychoacousticBassEnabled,
+        onReset = { viewModel.resetEffect(Effects.psychoacousticBass) },
         descriptionRes = R.string.effect_desc_psychoacoustic_bass,
         icon = Icons.Default.Psychology,
     ) {
@@ -2299,6 +2326,7 @@ fun ViperBassSection(
         title = stringResource(R.string.section_viper_bass),
         enabled = enabled,
         onEnabledChange = viewModel::setBassEnabled,
+        onReset = { viewModel.resetEffect(Effects.bass) },
         descriptionRes = R.string.effect_desc_viper_bass,
         icon = Icons.Default.GraphicEq,
     ) {
@@ -2372,6 +2400,7 @@ fun ViperBassMonoSection(
         title = stringResource(R.string.section_viper_bass_mono),
         enabled = enabled,
         onEnabledChange = viewModel::setBassMonoEnabled,
+        onReset = { viewModel.resetEffect(Effects.bassMono) },
         descriptionRes = R.string.effect_desc_viper_bass_mono,
         icon = Icons.Default.GraphicEq,
     ) {
@@ -2443,6 +2472,7 @@ fun ViperClaritySection(
         title = stringResource(R.string.section_viper_clarity),
         enabled = enabled,
         onEnabledChange = viewModel::setClarityEnabled,
+        onReset = { viewModel.resetEffect(Effects.clarity) },
         descriptionRes = R.string.effect_desc_viper_clarity,
         icon = Icons.Default.Hearing,
     ) {
@@ -2490,6 +2520,7 @@ fun AuditoryProtectionSection(
         title = stringResource(R.string.section_cure),
         enabled = enabled,
         onEnabledChange = viewModel::setCureEnabled,
+        onReset = { viewModel.resetEffect(Effects.cure) },
         descriptionRes = R.string.effect_desc_cure,
         icon = Icons.Default.HealthAndSafety,
     ) {
@@ -2524,6 +2555,7 @@ fun AnalogXSection(
         title = stringResource(R.string.section_analogx),
         enabled = enabled,
         onEnabledChange = viewModel::setAnalogXEnabled,
+        onReset = { viewModel.resetEffect(Effects.analogX) },
         descriptionRes = R.string.effect_desc_analogx,
         icon = Icons.Default.Memory,
     ) {
@@ -2545,6 +2577,7 @@ fun SpeakerOptSection(
         title = stringResource(R.string.section_speaker_optimization),
         enabled = state.speakerCorrection.enable,
         onEnabledChange = viewModel::setSpeakerCorrectionEnabled,
+        onReset = { viewModel.resetEffect(Effects.speakerCorrection) },
         descriptionRes = R.string.effect_desc_speaker_correction,
         icon = Icons.Default.SpeakerPhone,
         toggleOnly = true,

@@ -28,7 +28,10 @@ import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_MA
 import org.lunaris.dolby.viper.effect.BoolListPref
 import org.lunaris.dolby.viper.effect.BoolPref
 import org.lunaris.dolby.viper.effect.DoubleListPref
+import org.lunaris.dolby.viper.effect.EFFECT_GROUPS
 import org.lunaris.dolby.viper.effect.ENABLE_PREF_BY_EFFECT_KEY
+import org.lunaris.dolby.viper.effect.EffectGroup
+import org.lunaris.dolby.viper.effect.EffectGroupBuilder
 import org.lunaris.dolby.viper.effect.EffectPref
 import org.lunaris.dolby.viper.effect.EffectState
 import org.lunaris.dolby.viper.effect.Effects
@@ -42,6 +45,7 @@ import org.lunaris.dolby.viper.effect.PRESET_SCHEMA_VERSION
 import org.lunaris.dolby.viper.effect.StringPref
 import org.lunaris.dolby.viper.effect.deserializeEffectPrefs
 import org.lunaris.dolby.viper.effect.loadEffectStateFromPrefs
+import org.lunaris.dolby.viper.effect.resetEffectPrefs
 import org.lunaris.dolby.viper.effect.saveEffectPrefs
 import org.lunaris.dolby.viper.effect.serializeEffectPrefs
 import org.lunaris.dolby.viper.service.ViperService
@@ -59,6 +63,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -358,6 +363,42 @@ class ViperViewModel @JvmOverloads constructor(
         fun dispatchFullState() {
             val service = viperService ?: return
             service.dispatchFullState(uiState.value)
+        }
+
+        fun resetEffect(effect: EffectGroupBuilder) {
+            resetEffects(listOf(effect.toGroup()))
+        }
+
+        fun resetAllEffects() {
+            resetEffects(EFFECT_GROUPS)
+        }
+
+        private fun resetEffects(groups: List<EffectGroup>) {
+            val deviceId = uiState.value.activeDeviceId
+            if (deviceId.isEmpty()) return
+            val effectKeys = groups.map { it.effectKey }.toSet()
+            val pendingJobs =
+                groups.flatMap { it.prefs }.mapNotNull { persistJobs.remove(it.prefKey) }
+            pendingJobs.forEach { it.cancel() }
+            uiState.update { resetEffectPrefs(it, groups) }
+            if (Effects.equalizer.effectKey in effectKeys) {
+                loadEqPresetsForBandCount(uiState.value.eq.bandCount)
+            }
+            dispatchFullState()
+            ifMasterOn {
+                if (Effects.ddc.effectKey in effectKeys) {
+                    viperService?.applyDdcDevice("", force = true)
+                }
+                if (Effects.convolver.effectKey in effectKeys) {
+                    viperService?.applyConvolverKernel("", force = true)
+                }
+            }
+            viewModelScope.launch {
+                pendingJobs.joinAll()
+                if (uiState.value.activeDeviceId != deviceId) return@launch
+                saveEffectPrefs(repository, uiState.value)
+                saveCurrentDeviceSettings()
+            }
         }
 
         fun setMasterEnabled(enabled: Boolean) {
