@@ -34,6 +34,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -54,7 +56,7 @@ fun FloatingNavToolbar(
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    val routes = listOf("settings", "equalizer", "advanced")
+    val routes = listOf("settings", "equalizer", "advanced", "v4a")
     val selectedIndex = routes.indexOf(currentRoute).coerceAtLeast(0)
 
     Surface(
@@ -77,11 +79,14 @@ fun FloatingNavToolbar(
                     icon = when (route) {
                         "equalizer" -> Icons.Rounded.GraphicEq
                         "advanced" -> Icons.Rounded.Tune
+                        "v4a" -> null
                         else -> Icons.Rounded.Home
                     },
+                    painter = if (route == "v4a") painterResource(R.drawable.ic_viper4android) else null,
                     label = stringResource(when (route) {
                         "equalizer" -> R.string.equalizer
                         "advanced" -> R.string.advanced
+                        "v4a" -> R.string.v4a_tab_title
                         else -> R.string.home
                     }),
                     selected = selected,
@@ -101,7 +106,8 @@ fun FloatingNavToolbar(
 
 @Composable
 private fun NavToolbarItem(
-    icon: ImageVector,
+    icon: ImageVector?,
+    painter: Painter?,
     label: String,
     selected: Boolean,
     onClick: () -> Unit,
@@ -150,11 +156,19 @@ private fun NavToolbarItem(
             LocalContentColor provides if (selected) MaterialTheme.colorScheme.onPrimaryContainer
                 else MaterialTheme.colorScheme.onSurfaceVariant,
         ) {
-            Icon(
-                icon,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp),
-            )
+            if (painter != null) {
+                Icon(
+                    painter = painter,
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                )
+            } else {
+                Icon(
+                    imageVector = requireNotNull(icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
             AnimatedVisibility(
                 visible = selected,
                 enter = fadeIn() + expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()),

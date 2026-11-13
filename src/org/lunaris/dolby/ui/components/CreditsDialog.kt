@@ -96,6 +96,12 @@ fun CreditsDialog(
             isHighlighted = true
         ),
         Contributor(
+            name = "Alhaidar Latif",
+            githubUsername = "zylhdrXP",
+            contribution = "ViPER4Android DSP integration",
+            isHighlighted = true
+        ),
+        Contributor(
             name = "Kenway",
             githubUsername = "kenway214",
             contribution = "Base & Treble Changes, EQ Tuning",

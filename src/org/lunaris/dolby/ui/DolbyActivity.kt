@@ -24,11 +24,14 @@ import org.lunaris.dolby.ui.screens.DolbyNavHost
 import org.lunaris.dolby.ui.theme.DolbyTheme
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
+import org.lunaris.dolby.viper.service.ViperService
+import org.lunaris.dolby.viper.ui.viewmodel.ViperViewModel
 
 class DolbyActivity : ComponentActivity() {
 
     private val dolbyViewModel: DolbyViewModel by viewModels()
     private val equalizerViewModel: EqualizerViewModel by viewModels()
+    private val viperViewModel: ViperViewModel by viewModels()
     
     private val audioManager by lazy { getSystemService(AudioManager::class.java) }
     private val handler = Handler(Looper.getMainLooper())
@@ -102,6 +105,11 @@ class DolbyActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         DolbyConstants.dlog(TAG, "Activity onCreate")
         lifecycle.addObserver(lifecycleObserver)
+        try {
+            ViperService.startService(this)
+        } catch (e: Exception) {
+            DolbyConstants.dlog(TAG, "Failed to start ViperService: ${e.message}")
+        }
         
         setContent {
             DolbyTheme {
@@ -112,7 +120,8 @@ class DolbyActivity : ComponentActivity() {
                 ) {
                     DolbyNavHost(
                         dolbyViewModel = dolbyViewModel,
-                        equalizerViewModel = equalizerViewModel
+                        equalizerViewModel = equalizerViewModel,
+                        viperViewModel = viperViewModel
                     )
                 }
             }

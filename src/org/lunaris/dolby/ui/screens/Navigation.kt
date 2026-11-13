@@ -35,11 +35,13 @@ import org.lunaris.dolby.ui.components.FloatingNavToolbar
 import org.lunaris.dolby.ui.viewmodel.AppProfileViewModel
 import org.lunaris.dolby.ui.viewmodel.DolbyViewModel
 import org.lunaris.dolby.ui.viewmodel.EqualizerViewModel
+import org.lunaris.dolby.viper.ui.viewmodel.ViperViewModel
 
 sealed class Screen(val route: String) {
     object Settings : Screen("settings")
     object Equalizer : Screen("equalizer")
     object Advanced : Screen("advanced")
+    object V4A : Screen("v4a")
     object AppProfiles : Screen("app_profiles")
     object ImportExport : Screen("import_export")
 }
@@ -49,11 +51,12 @@ sealed class Screen(val route: String) {
 fun MainPagerScreen(
     dolbyViewModel: DolbyViewModel,
     equalizerViewModel: EqualizerViewModel,
+    viperViewModel: ViperViewModel,
     navController: NavController
 ) {
     val pagerState = rememberPagerState(
         initialPage = 0,
-        pageCount = { 3 }
+        pageCount = { 4 }
     )
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -66,6 +69,7 @@ fun MainPagerScreen(
         0 -> "settings"
         1 -> "equalizer"
         2 -> "advanced"
+        3 -> "v4a"
         else -> "settings"
     }
 
@@ -97,6 +101,11 @@ fun MainPagerScreen(
                         navController = navController,
                         bottomPadding = toolbarBottomPadding,
                     )
+                    3 -> ModernV4AScreen(
+                        viewModel = viperViewModel,
+                        navController = navController,
+                        bottomPadding = toolbarBottomPadding,
+                    )
                 }
             }
             FloatingNavToolbar(
@@ -107,6 +116,7 @@ fun MainPagerScreen(
                             "settings" -> pagerState.animateScrollToPage(0)
                             "equalizer" -> pagerState.animateScrollToPage(1)
                             "advanced" -> pagerState.animateScrollToPage(2)
+                            "v4a" -> pagerState.animateScrollToPage(3)
                         }
                     }
                 },
@@ -126,7 +136,8 @@ fun MainPagerScreen(
 @Composable
 fun DolbyNavHost(
     dolbyViewModel: DolbyViewModel,
-    equalizerViewModel: EqualizerViewModel
+    equalizerViewModel: EqualizerViewModel,
+    viperViewModel: ViperViewModel,
 ) {
     val navController = rememberNavController()
 
@@ -138,6 +149,7 @@ fun DolbyNavHost(
             MainPagerScreen(
                 dolbyViewModel = dolbyViewModel,
                 equalizerViewModel = equalizerViewModel,
+                viperViewModel = viperViewModel,
                 navController = navController
             )
         }

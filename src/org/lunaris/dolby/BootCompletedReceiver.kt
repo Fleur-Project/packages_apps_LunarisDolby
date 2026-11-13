@@ -11,10 +11,14 @@ import android.content.Context
 import android.content.Intent
 import android.provider.Settings
 import android.util.Log
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import org.lunaris.dolby.data.DolbyRepository
 import org.lunaris.dolby.service.AppProfileMonitorService
 import org.lunaris.dolby.service.DolbyEffectService
 import org.lunaris.dolby.service.DolbyNotificationListener
+import org.lunaris.dolby.viper.data.repository.ViperRepository
+import org.lunaris.dolby.viper.service.ViperService
 
 class BootCompletedReceiver : BroadcastReceiver() {
 
@@ -35,6 +39,18 @@ class BootCompletedReceiver : BroadcastReceiver() {
                     
                     if (isNotificationListenerEnabled(context)) {
                         requestNotificationListenerRebind(context)
+                    }
+
+                    try {
+                        val viperRepo = ViperRepository.getInstance(context)
+                        val autoStart = runBlocking {
+                            viperRepo.getBooleanPreference(ViperRepository.PREF_AUTO_START, true).first()
+                        }
+                        if (autoStart) {
+                            ViperService.startService(context)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to initialize ViPER4Android", e)
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to initialize Dolby", e)
