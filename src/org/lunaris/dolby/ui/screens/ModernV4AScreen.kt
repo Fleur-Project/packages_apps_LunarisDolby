@@ -49,8 +49,6 @@ import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SpatialAudio
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -99,7 +97,6 @@ import org.lunaris.dolby.viper.ui.screens.settings.ExcludedAppsDialog
 import org.lunaris.dolby.viper.ui.screens.settings.SettingsDialog
 import org.lunaris.dolby.viper.ui.screens.status.DriverStatusDialog
 import org.lunaris.dolby.viper.ui.screens.main.DriverStatus
-import org.lunaris.dolby.ui.theme.status_active_green
 import org.lunaris.dolby.viper.ui.viewmodel.ViperViewModel
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -349,7 +346,7 @@ fun ModernV4AScreen(
                 end = 20.dp,
                 bottom = 12.dp + bottomPadding,
             ),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             item {
                 DolbyPageHeading(
@@ -407,15 +404,28 @@ fun V4AMainCard(
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
 
-    Card(
+    val containerColor by animateColorAsState(
+        targetValue = if (enabled) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceContainerLow
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "v4a_master_container",
+    )
+    val contentColor = if (enabled) {
+        MaterialTheme.colorScheme.onPrimaryContainer
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
+
+    Surface(
         modifier = modifier
             .fillMaxWidth()
             .squishable(),
         shape = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        color = containerColor,
+        contentColor = contentColor,
     ) {
         Column(
             modifier = Modifier
@@ -430,7 +440,7 @@ fun V4AMainCard(
                     },
                 )
                 .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -441,14 +451,14 @@ fun V4AMainCard(
                     shape = RoundedCornerShape(24.dp),
                     color = if (enabled) MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.surfaceContainerHigh,
-                    modifier = Modifier.size(64.dp),
+                    modifier = Modifier.size(72.dp),
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
                             painter = painterResource(R.drawable.ic_qs_master),
                             contentDescription = null,
                             tint = if (enabled) MaterialTheme.colorScheme.onPrimary
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                            else contentColor,
                             modifier = Modifier.size(32.dp),
                         )
                     }
@@ -461,22 +471,31 @@ fun V4AMainCard(
                     Text(
                         text = stringResource(R.string.v4a_title),
                         style = MaterialTheme.typography.headlineSmallEmphasized,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = contentColor,
                     )
 
                     // Active audio device display
                     if (activeDeviceName.isNotEmpty()) {
+                        val deviceIndicatorColor = if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             Canvas(modifier = Modifier.size(8.dp)) {
-                                drawCircle(if (enabled) status_active_green else androidx.compose.ui.graphics.Color.Gray)
+                                drawCircle(deviceIndicatorColor)
                             }
                             Text(
                                 text = activeDeviceName,
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = if (enabled) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                             )
                         }
                     }
@@ -490,7 +509,7 @@ fun V4AMainCard(
                         },
                         style = MaterialTheme.typography.labelSmall,
                         color = if (driverStatus.installed) {
-                            status_active_green
+                            MaterialTheme.colorScheme.primary
                         } else {
                             MaterialTheme.colorScheme.outline
                         },
@@ -506,7 +525,7 @@ fun V4AMainCard(
                 Text(
                     text = stringResource(if (enabled) R.string.dolby_on else R.string.dolby_off),
                     style = MaterialTheme.typography.labelLargeEmphasized,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = contentColor,
                 )
 
                 Switch(

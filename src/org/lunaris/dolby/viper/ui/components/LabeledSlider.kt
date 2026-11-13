@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,17 +24,24 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.window.Dialog
+import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
+import org.lunaris.dolby.utils.HapticFeedbackHelper
+import org.lunaris.dolby.utils.rememberHapticFeedback
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -59,6 +67,21 @@ fun LabeledSlider(
 ) {
     var showEditDialog by remember { mutableStateOf(false) }
     val canEdit = enabled && edit != null
+    val haptic = rememberHapticFeedback()
+    val scope = rememberCoroutineScope()
+    fun stepIndex(currentValue: Float): Int {
+        if (steps <= 0) return Int.MIN_VALUE
+        val intervalCount = steps + 1
+        val fraction =
+            ((currentValue - valueRange.start) / (valueRange.endInclusive - valueRange.start))
+                .coerceIn(0f, 1f)
+        return (fraction * intervalCount).roundToInt()
+    }
+    var lastHapticStep by remember { mutableIntStateOf(stepIndex(value)) }
+
+    LaunchedEffect(value, steps, valueRange.start, valueRange.endInclusive) {
+        lastHapticStep = stepIndex(value)
+    }
 
     Column(modifier = modifier.fillMaxWidth().padding(vertical = UiDimens.XSmall)) {
         Row(
@@ -73,7 +96,9 @@ fun LabeledSlider(
             )
             val valueModifier =
                 if (canEdit) {
-                    Modifier.clickable { showEditDialog = true }
+                    Modifier
+                        .clickable(role = Role.Button) { showEditDialog = true }
+                        .heightIn(min = UiDimens.SwitchSlotHeight)
                 } else {
                     Modifier
                 }.padding(horizontal = UiDimens.Medium, vertical = UiDimens.XSmall)
@@ -92,7 +117,16 @@ fun LabeledSlider(
         val hideTicks = steps == 0 || steps >= 10
         Slider(
             value = value,
-            onValueChange = onValueChange,
+            onValueChange = { newValue ->
+                val newStep = stepIndex(newValue)
+                if (enabled && newStep != Int.MIN_VALUE && newStep != lastHapticStep) {
+                    scope.launch {
+                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TEXTURE_TICK)
+                    }
+                    lastHapticStep = newStep
+                }
+                onValueChange(newValue)
+            },
             valueRange = valueRange,
             steps = steps,
             enabled = enabled,
@@ -138,7 +172,7 @@ fun NumberInputDialog(
 
     var text by remember { mutableStateOf(fmt(edit.displayValue)) }
     val parsed = text.trim().toDoubleOrNull()
-    val isValid = parsed != null
+    val isValid = parsed != null && parsed in min..max
 
     val rangeHint =
         if (edit.unit.isNotEmpty()) {
@@ -170,7 +204,10 @@ fun NumberInputDialog(
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     IconButton(onClick = onDismiss) {
-                        Icon(Icons.Default.Close, contentDescription = null)
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = stringResource(R.string.action_close),
+                        )
                     }
                 }
                 OutlinedTextField(

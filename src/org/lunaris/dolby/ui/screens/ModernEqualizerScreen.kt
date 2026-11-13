@@ -636,6 +636,10 @@ private fun BandTunerCard(
     var sliderValue by remember(index, band.gain) { mutableFloatStateOf(band.gain / 10f) }
     var lastHapticStep by remember(index) { mutableIntStateOf(band.gain) }
 
+    LaunchedEffect(index, band.gain) {
+        lastHapticStep = band.gain
+    }
+
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -1217,6 +1221,10 @@ fun ModernEqualizerBand(
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
     var lastHapticValue by remember { mutableIntStateOf((gain / 10f).toInt()) }
+
+    LaunchedEffect(gain) {
+        lastHapticValue = (gain / 10f).toInt()
+    }
 
     Column(
         modifier = modifier

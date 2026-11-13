@@ -408,6 +408,10 @@ fun ModernSettingSlider(
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
     var lastHapticValue by remember { mutableIntStateOf(value) }
+
+    LaunchedEffect(value) {
+        lastHapticValue = value
+    }
     
     Column(modifier = modifier.fillMaxWidth()) {
         Row(

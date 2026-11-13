@@ -189,15 +189,22 @@ fun EffectSection(
                         imageVector = icon,
                         contentDescription = null,
                         modifier = Modifier.size(EffectHeaderIconSize),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint = if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                     )
                     Spacer(modifier = Modifier.width(EffectHeaderIconSpacing))
                 }
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.titleMediumEmphasized,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     modifier = Modifier.weight(1f),
                 )
                 if (hasEnableSwitch) {

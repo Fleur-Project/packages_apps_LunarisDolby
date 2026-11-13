@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
+import org.lunaris.dolby.viper.utils.FileLogger
 import java.util.concurrent.Executors
 
 object HapticFeedbackHelper {
@@ -31,18 +32,18 @@ object HapticFeedbackHelper {
     
     suspend fun triggerVibration(context: Context, intensity: HapticIntensity) {
         withContext(executor) {
+            val vibrator = getVibrator(context) ?: return@withContext
+            if (!vibrator.hasVibrator()) {
+                return@withContext
+            }
+
+            val effect = createVibrationEffect(intensity) ?: return@withContext
             try {
-                val vibrator = getVibrator(context) ?: return@withContext
-                
-                if (!vibrator.hasVibrator()) {
-                    return@withContext
-                }
-                
-                val effect = createVibrationEffect(intensity) ?: return@withContext
-                
-                vibrator.cancel()
                 vibrator.vibrate(effect)
-            } catch (e: Exception) {
+            } catch (e: SecurityException) {
+                FileLogger.w("Haptics", "Vibration permission denied")
+            } catch (e: RuntimeException) {
+                FileLogger.e("Haptics", "Vibration request failed", e)
             }
         }
     }
@@ -51,7 +52,11 @@ object HapticFeedbackHelper {
         return try {
             val vibratorManager = context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager
             vibratorManager?.defaultVibrator
-        } catch (e: Exception) {
+        } catch (e: SecurityException) {
+            FileLogger.w("Haptics", "Vibrator service access denied")
+            null
+        } catch (e: ClassCastException) {
+            FileLogger.e("Haptics", "Unexpected vibrator service type", e)
             null
         }
     }
@@ -70,7 +75,8 @@ object HapticFeedbackHelper {
                 HapticIntensity.HEAVY_CLICK -> 
                     VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
             }
-        } catch (e: Exception) {
+        } catch (e: IllegalArgumentException) {
+            FileLogger.e("Haptics", "Unsupported vibration effect: $intensity", e)
             null
         }
     }

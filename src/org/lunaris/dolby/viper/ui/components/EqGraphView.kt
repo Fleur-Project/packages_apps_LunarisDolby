@@ -33,8 +33,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,12 +49,17 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
+import org.lunaris.dolby.utils.HapticFeedbackHelper
+import org.lunaris.dolby.utils.rememberHapticFeedback
 import org.lunaris.dolby.viper.data.model.EqPreset
 import org.lunaris.dolby.viper.effect.BuiltinPresets
 import java.util.Locale
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 private const val DB_MIN = -12f
 private const val DB_MAX = 12f
@@ -392,6 +399,11 @@ fun EqEditDialog(
                     bandLabels.forEachIndexed { index, label ->
                         if (index < localBands.size) {
                             var showBandEdit by remember { mutableStateOf(false) }
+                            val haptic = rememberHapticFeedback()
+                            val scope = rememberCoroutineScope()
+                            var lastHapticStep by remember {
+                                mutableIntStateOf((localBands[index] * 10f).roundToInt())
+                            }
 
                             val applyBandChange = { newVal: Float ->
                                 localBands[index] = newVal.coerceIn(DB_MIN, DB_MAX)
@@ -411,7 +423,18 @@ fun EqEditDialog(
                                 )
                                 Slider(
                                     value = localBands[index],
-                                    onValueChange = { applyBandChange(it) },
+                                    onValueChange = {
+                                        val hapticStep = (it * 10f).roundToInt()
+                                        if (hapticStep != lastHapticStep) {
+                                            scope.launch {
+                                                haptic.performHaptic(
+                                                    HapticFeedbackHelper.HapticIntensity.TEXTURE_TICK,
+                                                )
+                                            }
+                                            lastHapticStep = hapticStep
+                                        }
+                                        applyBandChange(it)
+                                    },
                                     valueRange = DB_MIN..DB_MAX,
                                     modifier = Modifier.weight(1f),
                                     colors =
@@ -425,7 +448,11 @@ fun EqEditDialog(
                                     text = "${"%.1f".format(localBands[index])}dB",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.width(UiDimens.ValueColumnWidth).clickable { showBandEdit = true },
+                                    modifier =
+                                        Modifier
+                                            .width(UiDimens.ValueColumnWidth)
+                                            .heightIn(min = UiDimens.SwitchSlotHeight)
+                                            .clickable(role = Role.Button) { showBandEdit = true },
                                     maxLines = 1,
                                 )
                             }

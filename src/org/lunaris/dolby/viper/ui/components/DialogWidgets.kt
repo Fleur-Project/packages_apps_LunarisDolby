@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Download
@@ -31,11 +30,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 
-private val DialogCardCornerRadius = UiDimens.Standard
 private val DialogButtonSpacing = UiDimens.Medium
 private val DialogDividerPadding = UiDimens.Standard
 private val DialogEmptyVerticalPadding = UiDimens.IconLarge
@@ -73,7 +72,7 @@ fun DialogSectionLabel(label: String) {
 fun DialogCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(DialogCardCornerRadius),
+        shape = MaterialTheme.shapes.medium,
         colors =
             CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -149,7 +148,13 @@ fun DialogListItemRow(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(role = Role.Button, onClick = onClick)
+                    } else {
+                        Modifier
+                    },
+                )
                 .padding(horizontal = DialogRowHorizontalPadding, vertical = DialogListItemVerticalPadding),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(DialogRowIconSpacing),
@@ -213,7 +218,7 @@ fun NavRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(role = Role.Button, onClick = onClick)
                 .padding(horizontal = DialogRowHorizontalPadding, vertical = DialogRowVerticalPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -269,7 +274,7 @@ fun ActionRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(role = Role.Button, onClick = onClick)
                 .padding(horizontal = DialogRowHorizontalPadding, vertical = DialogRowVerticalPadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -309,7 +314,13 @@ fun InfoRow(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+                .then(
+                    if (onClick != null) {
+                        Modifier.clickable(role = Role.Button, onClick = onClick)
+                    } else {
+                        Modifier
+                    },
+                )
                 .padding(horizontal = DialogRowHorizontalPadding, vertical = DialogRowVerticalPadding),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
