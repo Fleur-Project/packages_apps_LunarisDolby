@@ -56,7 +56,7 @@ class ViperService : LifecycleService() {
                 Intent(context, ViperService::class.java).apply {
                     action = ACTION_START
                 }
-            context.startForegroundService(intent)
+            context.startService(intent)
         }
 
         fun toggleMaster(
@@ -68,7 +68,11 @@ class ViperService : LifecycleService() {
                     action = ACTION_TOGGLE_MASTER
                     putExtra(EXTRA_MASTER_ENABLED, enabled)
                 }
-            context.startForegroundService(intent)
+            if (enabled) {
+                context.startForegroundService(intent)
+            } else {
+                context.startService(intent)
+            }
         }
     }
 
@@ -127,6 +131,7 @@ class ViperService : LifecycleService() {
         }
 
     private var bootMasterEnabled: Boolean = false
+    private var foregroundStarted = false
     private val masterEnabled: Boolean
         get() = stateProvider?.invoke()?.masterEnable ?: lastUiState?.masterEnable ?: bootMasterEnabled
 
@@ -138,7 +143,6 @@ class ViperService : LifecycleService() {
         super.onCreate()
         repository = ViperRepository.getInstance(this)
         createNotificationChannel()
-        startForeground(NOTIFICATION_ID, buildNotification())
         FileLogger.i("Service", "Service created")
         lifecycleScope.launch {
             ensureConfigLoaded()
@@ -308,6 +312,10 @@ class ViperService : LifecycleService() {
         when (intent?.action) {
             ACTION_START -> {
                 FileLogger.i("Service", "Service started")
+                lifecycleScope.launch {
+                    ensureConfigLoaded()
+                    updateForegroundNotification(bootMasterEnabled)
+                }
             }
 
             ACTION_STOP -> {
@@ -325,6 +333,7 @@ class ViperService : LifecycleService() {
                     val state = currentDeviceState()
                     stateProvider = null
                     lastUiState = state
+                    updateForegroundNotification(next)
                     applyState(state, next)
                 }
             }
@@ -412,6 +421,7 @@ class ViperService : LifecycleService() {
 
     fun dispatchFullState(state: EffectState) {
         lastUiState = state
+        updateForegroundNotification(state.masterEnable)
         applyState(state, masterEnabled)
     }
 
@@ -599,5 +609,15 @@ class ViperService : LifecycleService() {
             .setOngoing(true)
             .setContentIntent(pendingIntent)
             .build()
+    }
+
+    private fun updateForegroundNotification(enabled: Boolean) {
+        if (enabled && !foregroundStarted) {
+            startForeground(NOTIFICATION_ID, buildNotification())
+            foregroundStarted = true
+        } else if (!enabled && foregroundStarted) {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+            foregroundStarted = false
+        }
     }
 }
