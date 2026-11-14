@@ -53,7 +53,6 @@ import androidx.compose.material.icons.rounded.SpatialAudio
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -333,6 +332,20 @@ fun ModernV4AScreen(
                             tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
+                    IconButton(
+                        onClick = { showResetAllConfirm = true },
+                        enabled = state.activeDeviceId.isNotEmpty(),
+                    ) {
+                        Icon(
+                            Icons.Default.RestartAlt,
+                            contentDescription = stringResource(R.string.action_reset_all_effects),
+                            tint = if (state.activeDeviceId.isNotEmpty()) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                            },
+                        )
+                    }
                     IconButton(onClick = { showSettingsDialog = true }) {
                         Icon(
                             Icons.Default.Settings,
@@ -353,48 +366,34 @@ fun ModernV4AScreen(
             label = "effectListAlpha",
         )
 
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues),
+            state = listState,
+            contentPadding = PaddingValues(
+                start = 20.dp,
+                top = 12.dp,
+                end = 20.dp,
+                bottom = 12.dp + bottomPadding,
+            ),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            OutlinedButton(
-                onClick = { showResetAllConfirm = true },
-                enabled = state.activeDeviceId.isNotEmpty(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-            ) {
-                Icon(Icons.Default.RestartAlt, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.action_reset_all_effects))
+            item {
+                DolbyPageHeading(
+                    title = stringResource(R.string.v4a_title),
+                    subtitle = stringResource(R.string.v4a_subtitle),
+                )
             }
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                state = listState,
-                contentPadding = PaddingValues(
-                    start = 20.dp,
-                    top = 12.dp,
-                    end = 20.dp,
-                    bottom = 12.dp + bottomPadding,
-                ),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                item {
-                    DolbyPageHeading(
-                        title = stringResource(R.string.v4a_title),
-                        subtitle = stringResource(R.string.v4a_subtitle),
-                    )
-                }
 
-                item {
-                    V4AMainCard(
-                        enabled = state.masterEnable,
-                        activeDeviceName = state.activeDeviceName,
-                        driverStatus = driverStatus,
-                        onEnabledChange = { viewModel.setMasterEnabled(it) },
-                    )
-                }
+            item {
+                V4AMainCard(
+                    enabled = state.masterEnable,
+                    activeDeviceName = state.activeDeviceName,
+                    driverStatus = driverStatus,
+                    onEnabledChange = { viewModel.setMasterEnabled(it) },
+                )
+            }
 
             // Virtualized effect section items
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { MasterLimiterRows(state, viewModel) } }
@@ -421,7 +420,6 @@ fun ModernV4AScreen(
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AuditoryProtectionSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AnalogXSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { SpeakerOptSection(state, viewModel) } }
-            }
         }
     }
 }
