@@ -9,7 +9,6 @@ package org.lunaris.dolby.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandHorizontally
@@ -23,6 +22,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
@@ -33,8 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -45,7 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
-import org.lunaris.dolby.utils.HapticFeedbackHelper
 import org.lunaris.dolby.utils.rememberHapticFeedback
 
 @Composable
@@ -60,16 +59,16 @@ fun FloatingNavToolbar(
     val selectedIndex = routes.indexOf(currentRoute).coerceAtLeast(0)
 
     Surface(
-        modifier = modifier
-            .widthIn(max = 440.dp)
-            .animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec()),
-        shape = RoundedCornerShape(32.dp),
+        modifier = modifier.widthIn(max = 440.dp),
+        shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         shadowElevation = 0.dp,
-        tonalElevation = 2.dp,
+        tonalElevation = 0.dp,
     ) {
         Row(
-            modifier = Modifier.padding(6.dp).selectableGroup(),
+            modifier = Modifier
+                .padding(4.dp)
+                .selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(2.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -93,7 +92,7 @@ fun FloatingNavToolbar(
                     onClick = {
                         if (route != currentRoute) {
                             scope.launch {
-                                haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
+                                haptic.click()
                             }
                             onNavigate(route)
                         }
@@ -113,27 +112,39 @@ private fun NavToolbarItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val motion = MaterialTheme.motionScheme
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val scale by animateFloatAsState(
         targetValue = if (pressed) 0.94f else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        animationSpec = motion.fastSpatialSpec(),
         label = "navigation_press",
     )
+    val targetRadius = when {
+        pressed -> if (selected) 20.dp else 12.dp
+        selected -> 26.dp
+        else -> 16.dp
+    }
     val radius by animateDpAsState(
-        targetValue = if (pressed) 16.dp else 26.dp,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        targetValue = targetRadius,
+        animationSpec = motion.fastSpatialSpec(),
         label = "navigation_shape",
     )
     val background by animateColorAsState(
         targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer
             else Color.Transparent,
-        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+        animationSpec = motion.fastEffectsSpec(),
         label = "navigation_color",
     )
+    val horizontalPadding by animateDpAsState(
+        targetValue = if (selected) 14.dp else 10.dp,
+        animationSpec = if (selected) motion.defaultSpatialSpec() else motion.fastSpatialSpec(),
+        label = "navigation_padding",
+    )
+
     Row(
         modifier = modifier
-            .sizeIn(minWidth = 52.dp, minHeight = 52.dp)
+            .sizeIn(minWidth = 48.dp, minHeight = 48.dp)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
@@ -148,7 +159,7 @@ private fun NavToolbarItem(
                 onClick = onClick,
             )
             .semantics { contentDescription = label }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = horizontalPadding, vertical = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -171,13 +182,19 @@ private fun NavToolbarItem(
             }
             AnimatedVisibility(
                 visible = selected,
-                enter = fadeIn() + expandHorizontally(MaterialTheme.motionScheme.defaultSpatialSpec()),
-                exit = fadeOut() + shrinkHorizontally(),
+                enter = fadeIn(animationSpec = motion.fastEffectsSpec()) +
+                    expandHorizontally(animationSpec = motion.defaultSpatialSpec()),
+                exit = fadeOut(animationSpec = motion.fastEffectsSpec()) +
+                    shrinkHorizontally(animationSpec = motion.fastSpatialSpec()),
             ) {
                 Text(
                     text = label,
-                    modifier = Modifier.padding(start = 6.dp).clearAndSetSemantics {},
+                    modifier = Modifier
+                        .padding(start = 6.dp)
+                        .widthIn(max = 90.dp)
+                        .clearAndSetSemantics {},
                     maxLines = 1,
+                    softWrap = false,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelLargeEmphasized,
                 )
