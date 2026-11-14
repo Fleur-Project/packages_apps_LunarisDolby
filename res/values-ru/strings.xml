@@ -444,6 +444,18 @@
     <string name="import_failed">Импортирование неудачно</string>
 
     
+    <!-- Per-App Filter -->
+    <string name="settings_per_app_filter">Фильтрация по приложениям</string>
+    <string name="settings_per_app_filter_desc">Настройка правил исключения или включения приложений</string>
+    <string name="settings_app_filter_exclude_summary">Режим исключения · %1$d исключено</string>
+    <string name="settings_app_filter_include_summary">Режим включения · %1$d включено</string>
+    <string name="filter_mode_exclude">Исключение</string>
+    <string name="filter_mode_include">Включение</string>
+    <string name="filter_mode_exclude_desc">Эффекты применяются ко всем приложениям, кроме выбранных ниже.</string>
+    <string name="filter_mode_include_desc">Эффекты применяются ТОЛЬКО к выбранным ниже приложениям.</string>
+    <string name="included_apps_title">Включенные приложения</string>
+    <string name="per_app_filter_title">Фильтрация по приложениям</string>
+
     <string name="excluded_apps_title">Исключенные приложения</string>
     <string name="excluded_apps_search">Поиск приложений</string>
     <string name="excluded_apps_loading">Загрузка приложений\u2026</string>

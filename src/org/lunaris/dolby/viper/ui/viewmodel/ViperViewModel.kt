@@ -20,10 +20,14 @@ import org.lunaris.dolby.viper.data.model.DsPreset
 import org.lunaris.dolby.viper.data.model.EqPreset
 import org.lunaris.dolby.viper.data.model.Preset
 import org.lunaris.dolby.viper.data.repository.ViperRepository
+import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.FILTER_MODE_EXCLUDE
+import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.FILTER_MODE_INCLUDE
+import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_APP_FILTER_MODE
 import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_AUTO_START
 import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_DEBUG_MODE
 import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_EXCLUDED_APPS
 import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_GLOBAL_MODE
+import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_INCLUDED_APPS
 import org.lunaris.dolby.viper.data.repository.ViperRepository.Companion.PREF_MASTER_ENABLE
 import org.lunaris.dolby.viper.effect.BoolListPref
 import org.lunaris.dolby.viper.effect.BoolPref
@@ -123,6 +127,12 @@ class ViperViewModel @JvmOverloads constructor(
 
         val excludedApps: StateFlow<Set<String>>
             field: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+
+        val includedApps: StateFlow<Set<String>>
+            field: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+
+        val appFilterMode: StateFlow<String>
+            field: MutableStateFlow<String> = MutableStateFlow(FILTER_MODE_EXCLUDE)
 
         private var viperService: ViperService? = null
         private var serviceBound = false
@@ -337,6 +347,12 @@ class ViperViewModel @JvmOverloads constructor(
             aidlModeEnabled.value = repository.aidlMode
             viewModelScope.launch {
                 repository.getStringSetPreference(PREF_EXCLUDED_APPS).collect { excludedApps.value = it }
+            }
+            viewModelScope.launch {
+                repository.getStringSetPreference(PREF_INCLUDED_APPS).collect { includedApps.value = it }
+            }
+            viewModelScope.launch {
+                repository.getAppFilterMode().collect { appFilterMode.value = it }
             }
         }
 
@@ -1518,6 +1534,20 @@ class ViperViewModel @JvmOverloads constructor(
             val next = if (excluded) excludedApps.value + packageName else excludedApps.value - packageName
             excludedApps.value = next
             viewModelScope.launch { repository.setStringSetPreference(PREF_EXCLUDED_APPS, next) }
+        }
+
+        fun setAppIncluded(
+            packageName: String,
+            included: Boolean,
+        ) {
+            val next = if (included) includedApps.value + packageName else includedApps.value - packageName
+            includedApps.value = next
+            viewModelScope.launch { repository.setStringSetPreference(PREF_INCLUDED_APPS, next) }
+        }
+
+        fun setAppFilterMode(mode: String) {
+            appFilterMode.value = mode
+            viewModelScope.launch { repository.setAppFilterMode(mode) }
         }
 
         fun loadInstalledApps(onLoaded: (List<InstalledAppInfo>) -> Unit) {

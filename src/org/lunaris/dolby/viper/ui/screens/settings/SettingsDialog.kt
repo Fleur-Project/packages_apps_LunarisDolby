@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.window.DialogProperties
 import org.lunaris.dolby.R
+import org.lunaris.dolby.viper.data.repository.ViperRepository
 import org.lunaris.dolby.viper.ui.components.ActionRow
 import org.lunaris.dolby.viper.ui.components.DialogCard
 import org.lunaris.dolby.viper.ui.components.DialogSectionLabel
@@ -37,6 +38,9 @@ import org.lunaris.dolby.ui.theme.status_active_green
 fun SettingsDialog(
     autoStartEnabled: Boolean,
     globalModeEnabled: Boolean,
+    appFilterMode: String,
+    excludedAppsCount: Int,
+    includedAppsCount: Int,
     aidlModeActive: Boolean,
     debugModeEnabled: Boolean,
     driverStatus: DriverStatus,
@@ -93,9 +97,15 @@ fun SettingsDialog(
                     )
                     if (!globalModeEnabled) {
                         RowDivider()
+                        val isIncludeMode = appFilterMode == ViperRepository.FILTER_MODE_INCLUDE
                         NavRow(
-                            label = stringResource(R.string.settings_excluded_apps),
-                            subtitle = stringResource(R.string.settings_excluded_apps_desc),
+                            label = stringResource(R.string.settings_per_app_filter),
+                            subtitle =
+                                if (isIncludeMode) {
+                                    stringResource(R.string.settings_app_filter_include_summary, includedAppsCount)
+                                } else {
+                                    stringResource(R.string.settings_app_filter_exclude_summary, excludedAppsCount)
+                                },
                             onClick = onOpenExcludedApps,
                         )
                     }

@@ -121,6 +121,8 @@ fun ModernV4AScreen(
     val aidlMode by viewModel.aidlModeEnabled.collectAsStateWithLifecycle()
     val debugMode by viewModel.debugModeEnabled.collectAsStateWithLifecycle()
     val excludedApps by viewModel.excludedApps.collectAsStateWithLifecycle()
+    val includedApps by viewModel.includedApps.collectAsStateWithLifecycle()
+    val appFilterMode by viewModel.appFilterMode.collectAsStateWithLifecycle()
 
     var showPresetDialog by remember { mutableStateOf(false) }
     var showResetAllConfirm by remember(state.activeDeviceId) { mutableStateOf(false) }
@@ -148,8 +150,12 @@ fun ModernV4AScreen(
 
     if (showExcludedAppsDialog) {
         ExcludedAppsDialog(
+            filterMode = appFilterMode,
+            onFilterModeChange = viewModel::setAppFilterMode,
             excludedApps = excludedApps,
-            onToggle = viewModel::setAppExcluded,
+            includedApps = includedApps,
+            onToggleExcluded = viewModel::setAppExcluded,
+            onToggleIncluded = viewModel::setAppIncluded,
             loadInstalledApps = viewModel::loadInstalledApps,
             onDismiss = { showExcludedAppsDialog = false },
         )
@@ -273,6 +279,9 @@ fun ModernV4AScreen(
         SettingsDialog(
             autoStartEnabled = autoStart,
             globalModeEnabled = globalMode,
+            appFilterMode = appFilterMode,
+            excludedAppsCount = excludedApps.size,
+            includedAppsCount = includedApps.size,
             aidlModeActive = aidlMode,
             debugModeEnabled = debugMode,
             onGlobalModeChanged = viewModel::toggleGlobalMode,

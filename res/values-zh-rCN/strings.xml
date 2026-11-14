@@ -256,6 +256,18 @@
     <string name="import_success">导入成功</string>
     <string name="import_failed">导入失败</string>
 
+    <!-- Per-App Filter -->
+    <string name="settings_per_app_filter">按应用过滤</string>
+    <string name="settings_per_app_filter_desc">配置排除或包含应用规则</string>
+    <string name="settings_app_filter_exclude_summary">排除模式 · 已排除 %1$d 个</string>
+    <string name="settings_app_filter_include_summary">包含模式 · 已包含 %1$d 个</string>
+    <string name="filter_mode_exclude">排除</string>
+    <string name="filter_mode_include">包含</string>
+    <string name="filter_mode_exclude_desc">音频效果将应用于除勾选应用外的所有应用。</string>
+    <string name="filter_mode_include_desc">音频效果将仅应用于勾选的应用。</string>
+    <string name="included_apps_title">包含的应用</string>
+    <string name="per_app_filter_title">按应用音频过滤</string>
+
     <!-- Excluded Apps -->
     <string name="excluded_apps_title">排除的应用</string>
     <string name="excluded_apps_search">搜索应用</string>
