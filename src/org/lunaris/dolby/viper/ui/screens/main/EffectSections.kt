@@ -47,6 +47,7 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerticalAlignCenter
 import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -124,13 +125,16 @@ private fun scaleToDb(scale: Number): Double = 20.0 * log10(scale.toDouble())
 
 private fun dbToScale(db: Double): Float = 10.0.pow(db / 20.0).toFloat()
 
-@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@OptIn(
+    androidx.compose.foundation.ExperimentalFoundationApi::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
 @Composable
 fun EffectSection(
     title: String,
     enabled: Boolean,
     onEnabledChange: (Boolean) -> Unit,
-    onReset: () -> Unit,
+    onReset: (() -> Unit)? = null,
     descriptionRes: Int,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
@@ -210,12 +214,6 @@ fun EffectSection(
                     },
                     modifier = Modifier.weight(1f),
                 )
-                IconButton(onClick = onReset) {
-                    Icon(
-                        imageVector = Icons.Default.RestartAlt,
-                        contentDescription = stringResource(R.string.action_reset_effect, title),
-                    )
-                }
                 if (hasEnableSwitch) {
                     Switch(
                         checked = enabled,
@@ -229,8 +227,8 @@ fun EffectSection(
             if (!toggleOnly) {
                 AnimatedVisibility(
                     visible = expanded,
-                    enter = expandVertically(),
-                    exit = shrinkVertically(),
+                    enter = expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                    exit = shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
                 ) {
                     Column(
                         modifier =
@@ -243,6 +241,33 @@ fun EffectSection(
                                 ),
                     ) {
                         content()
+                        if (onReset != null) {
+                            Spacer(modifier = Modifier.height(UiDimens.Medium))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                TextButton(
+                                    onClick = onReset,
+                                    shapes = ButtonDefaults.shapes(),
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    ),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.RestartAlt,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(UiDimens.IconSmall),
+                                    )
+                                    Spacer(modifier = Modifier.width(UiDimens.Compact))
+                                    Text(
+                                        text = stringResource(R.string.action_reset),
+                                        style = MaterialTheme.typography.labelMedium,
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
