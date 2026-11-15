@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableIntStateOf
@@ -32,7 +33,6 @@ import org.lunaris.dolby.viper.ui.components.NavRow
 import org.lunaris.dolby.viper.ui.components.RowDivider
 import org.lunaris.dolby.viper.ui.components.ToggleRow
 import org.lunaris.dolby.viper.ui.screens.main.DriverStatus
-import org.lunaris.dolby.ui.theme.status_active_green
 
 @Composable
 fun SettingsDialog(
@@ -159,7 +159,7 @@ fun SettingsDialog(
                         RowDivider()
                         IndicatorInfoRow(
                             label = stringResource(R.string.settings_aidl_mode),
-                            indicatorColor = status_active_green,
+                            indicatorColor = MaterialTheme.colorScheme.primary,
                         )
                     }
                     RowDivider()

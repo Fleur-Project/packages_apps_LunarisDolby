@@ -157,7 +157,6 @@ internal val DolbyDarkColorScheme = darkColorScheme(
 )
 
 // ViPER4Android & DSP Color Palette
-val status_active_green = Color(0xFF4CAF50)
 val log_source_app = Color(0xFF66BB6A)
 val log_source_driver = Color(0xFFAB47BC)
 val log_level_info = Color(0xFF42A5F5)
@@ -166,9 +165,4 @@ val log_level_debug = Color.Gray
 val log_level_error = Color(0xFFEF5350)
 val log_level_unspecified = Color.Unspecified
 
-val md_alert_note = Color(0xFF539BF5)
-val md_alert_tip = Color(0xFF57AB5A)
-val md_alert_important = Color(0xFF986EE2)
-val md_alert_warning = Color(0xFFC69026)
-val md_alert_caution = Color(0xFFE5534B)
 

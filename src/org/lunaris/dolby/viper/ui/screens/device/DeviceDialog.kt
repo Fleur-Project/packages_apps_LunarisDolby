@@ -42,7 +42,6 @@ import org.lunaris.dolby.viper.ui.components.InfoRow
 import org.lunaris.dolby.viper.ui.components.InputDialog
 import org.lunaris.dolby.viper.ui.components.NavRow
 import org.lunaris.dolby.viper.ui.components.RowDivider
-import org.lunaris.dolby.ui.theme.status_active_green
 import java.text.SimpleDateFormat
 import java.util.Date
 
@@ -260,7 +259,7 @@ private fun DeviceNavRow(
             },
         onClick = onSelect,
         leadingIcon = deviceIcon(device),
-        statusColor = if (isActive) status_active_green else null,
+        statusColor = if (isActive) MaterialTheme.colorScheme.primary else null,
     )
 }
 
