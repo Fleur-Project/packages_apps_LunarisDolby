@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
@@ -94,25 +96,36 @@ fun LabeledSlider(
                 color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
+            val pillContainerColor = if (enabled) {
+                if (canEdit) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            }
+            val pillContentColor = if (enabled) {
+                if (canEdit) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSecondaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
             val valueModifier =
                 if (canEdit) {
                     Modifier
                         .clickable(role = Role.Button) { showEditDialog = true }
-                        .heightIn(min = UiDimens.SwitchSlotHeight)
                 } else {
                     Modifier
-                }.padding(horizontal = UiDimens.Medium, vertical = UiDimens.XSmall)
-            Text(
-                text = valueLabel ?: value.roundToInt().toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                color =
-                    if (canEdit) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                }
+            Surface(
                 modifier = valueModifier,
-            )
+                shape = CircleShape,
+                color = pillContainerColor,
+                contentColor = pillContentColor,
+            ) {
+                Text(
+                    text = valueLabel ?: value.roundToInt().toString(),
+                    style = MaterialTheme.typography.labelMediumEmphasized,
+                    color = pillContentColor,
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                )
+            }
         }
         val hideTicks = steps == 0 || steps >= 10
         Slider(

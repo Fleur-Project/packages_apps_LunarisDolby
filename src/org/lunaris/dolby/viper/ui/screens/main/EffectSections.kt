@@ -1,8 +1,13 @@
 package org.lunaris.dolby.viper.ui.screens.main
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
@@ -46,12 +52,15 @@ import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VerticalAlignCenter
 import androidx.compose.material.icons.filled.Waves
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
@@ -68,6 +77,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
@@ -77,7 +87,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.graphics.shapes.Morph
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.lunaris.dolby.ui.components.MorphShape
 import org.lunaris.dolby.R
 import org.lunaris.dolby.viper.effect.EffectState
 import org.lunaris.dolby.viper.effect.Effects
@@ -192,16 +204,38 @@ fun EffectSection(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (icon != null) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        modifier = Modifier.size(EffectHeaderIconSize),
-                        tint = if (enabled) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                    val badgeMorph = remember {
+                        Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided)
+                    }
+                    val badgeProgress by animateFloatAsState(
+                        targetValue = if (enabled) 1f else 0f,
+                        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+                        label = "effect_badge_morph"
                     )
+                    val badgeBg by animateColorAsState(
+                        targetValue = if (enabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+                        label = "effect_badge_bg"
+                    )
+                    val badgeTint by animateColorAsState(
+                        targetValue = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+                        label = "effect_badge_tint"
+                    )
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(MorphShape(badgeMorph, badgeProgress))
+                            .background(badgeBg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = badgeTint
+                        )
+                    }
                     Spacer(modifier = Modifier.width(EffectHeaderIconSpacing))
                 }
                 Text(
@@ -218,6 +252,13 @@ fun EffectSection(
                     Switch(
                         checked = enabled,
                         onCheckedChange = onEnabledChange,
+                        thumbContent = {
+                            Icon(
+                                if (enabled) Icons.Rounded.Check else Icons.Rounded.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
                     )
                 } else {
                     Spacer(modifier = Modifier.height(EffectSwitchPlaceholderHeight))
@@ -227,8 +268,8 @@ fun EffectSection(
             if (!toggleOnly) {
                 AnimatedVisibility(
                     visible = expanded,
-                    enter = expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
-                    exit = shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                    enter = expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) + fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
+                    exit = shrinkVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) + fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
                 ) {
                     Column(
                         modifier =

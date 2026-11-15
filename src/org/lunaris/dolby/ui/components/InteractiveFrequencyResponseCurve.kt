@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Lunaris AOSP
+ * Copyright (C) 2024-2026 Lunaris AOSP
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -7,12 +7,13 @@
 
 package org.lunaris.dolby.ui.components
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -23,13 +24,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import org.lunaris.dolby.domain.models.BandGain
-import kotlin.math.abs
+import org.lunaris.dolby.utils.HapticFeedbackHelper
+import org.lunaris.dolby.utils.rememberHapticFeedback
 
 @Composable
 fun InteractiveFrequencyResponseCurve(
@@ -39,6 +44,10 @@ fun InteractiveFrequencyResponseCurve(
     isActive: Boolean = false,
     isEditable: Boolean = true
 ) {
+    val motion = MaterialTheme.motionScheme
+    val haptic = rememberHapticFeedback()
+    val scope = rememberCoroutineScope()
+
     val primaryColor = MaterialTheme.colorScheme.primary
     val onSurfaceVariantColor = MaterialTheme.colorScheme.onSurfaceVariant
     val secondaryColor = MaterialTheme.colorScheme.secondary
@@ -68,6 +77,7 @@ fun InteractiveFrequencyResponseCurve(
     
     var draggedIndex by remember { mutableStateOf<Int?>(null) }
     var controlPoints by remember { mutableStateOf(bandGains.map { it.gain }) }
+    var lastHapticStep by remember { mutableIntStateOf(0) }
     
     LaunchedEffect(bandGains) {
         if (draggedIndex == null) {
@@ -115,6 +125,10 @@ fun InteractiveFrequencyResponseCurve(
                                 
                                 if (closestIndex != -1) {
                                     draggedIndex = closestIndex
+                                    lastHapticStep = controlPoints[closestIndex] / 5
+                                    scope.launch {
+                                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
+                                    }
                                 }
                             },
                             onDrag = { change, _ ->
@@ -126,6 +140,17 @@ fun InteractiveFrequencyResponseCurve(
                                     val newGain = (normalizedGain * 150).toInt().coerceIn(-150, 150)
                                     
                                     if (controlPoints[index] != newGain) {
+                                        val step = newGain / 5
+                                        if (step != lastHapticStep) {
+                                            scope.launch {
+                                                if (newGain in -2..2) {
+                                                    haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
+                                                } else {
+                                                    haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TEXTURE_TICK)
+                                                }
+                                            }
+                                            lastHapticStep = step
+                                        }
                                         controlPoints = controlPoints.toMutableList().apply {
                                             this[index] = newGain
                                         }
@@ -136,6 +161,9 @@ fun InteractiveFrequencyResponseCurve(
                             onDragEnd = {
                                 draggedIndex?.let { index ->
                                     onBandGainChange(index, controlPoints[index])
+                                    scope.launch {
+                                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TICK)
+                                    }
                                 }
                                 draggedIndex = null
                             },
@@ -156,7 +184,7 @@ fun InteractiveFrequencyResponseCurve(
                 color = plotInkColor.copy(alpha = 0.5f),
                 start = Offset(0f, centerY),
                 end = Offset(width, centerY),
-                strokeWidth = 3f
+                strokeWidth = 2.5f
             )
 
             for (i in 1..4) {
@@ -205,12 +233,6 @@ fun InteractiveFrequencyResponseCurve(
                     }
                 }
                 
-                drawPath(
-                    path = path,
-                    color = curveColor,
-                    style = Stroke(width = if (isActive) 5f else 4f)
-                )
-                
                 val fillPath = Path().apply {
                     addPath(path)
                     lineTo(width, height)
@@ -222,9 +244,19 @@ fun InteractiveFrequencyResponseCurve(
                     path = fillPath,
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            curveColor.copy(alpha = if (isActive) 0.4f else 0.28f),
-                            curveColor.copy(alpha = 0.04f)
+                            curveColor.copy(alpha = if (isActive) 0.38f else 0.22f),
+                            curveColor.copy(alpha = 0.02f)
                         )
+                    )
+                )
+
+                drawPath(
+                    path = path,
+                    color = curveColor,
+                    style = Stroke(
+                        width = if (isActive) 5.5f else 4.5f,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
                     )
                 )
                 
@@ -234,27 +266,45 @@ fun InteractiveFrequencyResponseCurve(
                     val y = centerY - (normalizedGain * centerY * 0.85f)
                     
                     val isBeingDragged = draggedIndex == index
-                    val pointRadius = if (isBeingDragged) 14f else 10f
                     
                     if (isBeingDragged) {
                         drawCircle(
-                            color = curveColor.copy(alpha = 0.3f),
-                            radius = 24f,
+                            color = curveColor.copy(alpha = 0.22f),
+                            radius = 28f,
+                            center = Offset(x, y)
+                        )
+                        drawCircle(
+                            color = curveColor.copy(alpha = 0.45f),
+                            radius = 18f,
+                            center = Offset(x, y)
+                        )
+                        drawCircle(
+                            color = backgroundColor,
+                            radius = 12f,
+                            center = Offset(x, y)
+                        )
+                        drawCircle(
+                            color = curveColor,
+                            radius = 8f,
+                            center = Offset(x, y)
+                        )
+                    } else {
+                        drawCircle(
+                            color = curveColor.copy(alpha = 0.2f),
+                            radius = 11f,
+                            center = Offset(x, y)
+                        )
+                        drawCircle(
+                            color = backgroundColor,
+                            radius = 8f,
+                            center = Offset(x, y)
+                        )
+                        drawCircle(
+                            color = curveColor,
+                            radius = 5.5f,
                             center = Offset(x, y)
                         )
                     }
-
-                    drawCircle(
-                        color = backgroundColor,
-                        radius = pointRadius,
-                        center = Offset(x, y)
-                    )
-
-                    drawCircle(
-                        color = curveColor,
-                        radius = pointRadius - 2f,
-                        center = Offset(x, y)
-                    )
                 }
             }
         }
@@ -310,24 +360,46 @@ fun InteractiveFrequencyResponseCurve(
             )
         }
         
-        draggedIndex?.let { index ->
-            val gain = controlPoints[index]
-            val gainDb = gain / 10f
-            
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .padding(top = 8.dp),
-                shape = MaterialTheme.shapes.small,
-                color = primaryColor,
-                shadowElevation = 4.dp
-            ) {
-                Text(
-                    text = "${if (gainDb >= 0) "+" else ""}%.1f dB".format(gainDb),
-                    style = MaterialTheme.typography.labelLargeEmphasized,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        AnimatedVisibility(
+            visible = draggedIndex != null,
+            enter = fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec()),
+            exit = fadeOut(motion.fastEffectsSpec()) + scaleOut(motion.fastSpatialSpec()),
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 10.dp)
+        ) {
+            draggedIndex?.let { index ->
+                val gain = controlPoints.getOrNull(index) ?: 0
+                val gainDb = gain / 10f
+                val tooltipBg by animateColorAsState(
+                    targetValue = when {
+                        gain > 0 -> MaterialTheme.colorScheme.primary
+                        gain < 0 -> MaterialTheme.colorScheme.secondary
+                        else -> MaterialTheme.colorScheme.surfaceContainerHighest
+                    },
+                    animationSpec = motion.fastEffectsSpec(),
+                    label = "tooltip_bg"
                 )
+                val tooltipTextColor by animateColorAsState(
+                    targetValue = when {
+                        gain != 0 -> MaterialTheme.colorScheme.onPrimary
+                        else -> MaterialTheme.colorScheme.onSurface
+                    },
+                    animationSpec = motion.fastEffectsSpec(),
+                    label = "tooltip_text_color"
+                )
+                Surface(
+                    shape = CircleShape,
+                    color = tooltipBg,
+                    shadowElevation = 4.dp
+                ) {
+                    Text(
+                        text = "${if (gainDb > 0) "+" else ""}%.1f dB".format(gainDb),
+                        style = MaterialTheme.typography.labelLargeEmphasized,
+                        color = tooltipTextColor,
+                        modifier = Modifier.padding(horizontal = 18.dp, vertical = 6.dp)
+                    )
+                }
             }
         }
     }

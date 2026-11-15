@@ -1,13 +1,17 @@
 /*
- * Copyright (C) 2024-2025 Lunaris AOSP
+ * Copyright (C) 2024-2026 Lunaris AOSP
  * SPDX-License-Identifier: Apache-2.0
  */
 
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package org.lunaris.dolby.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -90,6 +94,23 @@ fun AnimatedWaveformBanner(
     barCount: Int = 56,
     animated: Boolean = true
 ) {
+    val motion = MaterialTheme.motionScheme
+    val activityProgress by animateFloatAsState(
+        targetValue = if (animated) 1f else 0f,
+        animationSpec = motion.slowSpatialSpec(),
+        label = "waveform_activity",
+    )
+    val animatedBarColor by animateColorAsState(
+        targetValue = barColor,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "waveform_bar_color",
+    )
+    val animatedAccentColor by animateColorAsState(
+        targetValue = accentColor,
+        animationSpec = motion.defaultEffectsSpec(),
+        label = "waveform_accent_color",
+    )
+
     val infiniteTransition = rememberInfiniteTransition(label = "waveform_banner")
 
     val phase by infiniteTransition.animateFloat(
@@ -135,25 +156,21 @@ fun AnimatedWaveformBanner(
                 gaussian(position, 0.14f, 0.10f) * 0.26f
             ).coerceIn(0f, 1f)
 
-            val ripple = if (animated) {
-                0.72f + 0.28f * sin(phase + position * 14f)
-            } else {
-                0.85f
-            }
-            val level = envelope * ripple * if (animated) swell else 0.9f
+            val ripple = 0.72f + 0.28f * sin(phase + position * 14f)
+            val level = (envelope * ripple * swell * activityProgress).coerceAtLeast(0f)
             val halfHeight = maxHalfHeight * level
 
-            val alpha = (0.28f + envelope * 0.72f).coerceIn(0f, 1f)
-            val color = if (envelope > 0.55f) {
-                lerpColor(barColor, accentColor, (envelope - 0.55f) / 0.45f)
+            val alpha = (0.28f + envelope * 0.72f * activityProgress).coerceIn(0.18f, 1f)
+            val color = if (envelope > 0.55f && activityProgress > 0.4f) {
+                lerpColor(animatedBarColor, animatedAccentColor, (envelope - 0.55f) / 0.45f)
             } else {
-                barColor
+                animatedBarColor
             }
 
             if (halfHeight <= radius * 1.15f) {
                 drawCircle(
-                    color = color.copy(alpha = alpha * 0.65f),
-                    radius = radius * 0.72f,
+                    color = color.copy(alpha = alpha * 0.55f),
+                    radius = radius * 0.65f,
                     center = Offset(centerX, centerY)
                 )
             } else {
