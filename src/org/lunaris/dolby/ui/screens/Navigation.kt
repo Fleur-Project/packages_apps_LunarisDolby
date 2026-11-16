@@ -3,8 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package org.lunaris.dolby.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
@@ -15,11 +22,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -29,6 +41,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.ui.components.FloatingNavToolbar
@@ -60,8 +73,31 @@ fun MainPagerScreen(
     )
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
+    val motion = MaterialTheme.motionScheme
     var toolbarHeightPx by remember { mutableIntStateOf(0) }
     val toolbarBottomPadding = with(density) { toolbarHeightPx.toDp() } + 32.dp
+    var isNavBarVisible by remember { mutableStateOf(true) }
+
+    val nestedScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                if (abs(available.y) > abs(available.x)) {
+                    if (available.y < -8f) {
+                        isNavBarVisible = false
+                    } else if (available.y > 8f) {
+                        isNavBarVisible = true
+                    }
+                }
+                return Offset.Zero
+            }
+        }
+    }
+
+    LaunchedEffect(pagerState.currentPage, pagerState.isScrollInProgress) {
+        if (pagerState.isScrollInProgress) {
+            isNavBarVisible = true
+        }
+    }
 
     // Follow the destination as soon as navigation starts so the pill moves
     // alongside the page transition, including when a swipe changes its target.
@@ -80,7 +116,11 @@ fun MainPagerScreen(
     }
 
     Surface(color = MaterialTheme.colorScheme.surface) {
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .nestedScroll(nestedScrollConnection)
+        ) {
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize(),
@@ -108,18 +148,16 @@ fun MainPagerScreen(
                     )
                 }
             }
-            FloatingNavToolbar(
-                currentRoute = currentRoute,
-                onNavigate = { route ->
-                    coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
-                        when (route) {
-                            "settings" -> pagerState.animateScrollToPage(0)
-                            "equalizer" -> pagerState.animateScrollToPage(1)
-                            "advanced" -> pagerState.animateScrollToPage(2)
-                            "v4a" -> pagerState.animateScrollToPage(3)
-                        }
-                    }
-                },
+            AnimatedVisibility(
+                visible = isNavBarVisible,
+                enter = slideInVertically(
+                    animationSpec = motion.defaultSpatialSpec(),
+                    initialOffsetY = { it * 2 },
+                ) + fadeIn(animationSpec = motion.fastEffectsSpec()),
+                exit = slideOutVertically(
+                    animationSpec = motion.fastSpatialSpec(),
+                    targetOffsetY = { it * 2 },
+                ) + fadeOut(animationSpec = motion.fastEffectsSpec()),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .windowInsetsPadding(
@@ -127,8 +165,26 @@ fun MainPagerScreen(
                             .only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal)
                     )
                     .padding(start = 16.dp, end = 16.dp, bottom = 12.dp)
-                    .onSizeChanged { toolbarHeightPx = it.height },
-            )
+                    .onSizeChanged {
+                        if (it.height > 0) {
+                            toolbarHeightPx = it.height
+                        }
+                    },
+            ) {
+                FloatingNavToolbar(
+                    currentRoute = currentRoute,
+                    onNavigate = { route ->
+                        coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                            when (route) {
+                                "settings" -> pagerState.animateScrollToPage(0)
+                                "equalizer" -> pagerState.animateScrollToPage(1)
+                                "advanced" -> pagerState.animateScrollToPage(2)
+                                "v4a" -> pagerState.animateScrollToPage(3)
+                            }
+                        }
+                    },
+                )
+            }
         }
     }
 }
