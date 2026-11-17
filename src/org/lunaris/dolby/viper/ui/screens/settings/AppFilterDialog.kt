@@ -47,7 +47,7 @@ import org.lunaris.dolby.viper.ui.components.UiDimens
 import org.lunaris.dolby.viper.ui.screens.main.InstalledAppInfo
 
 @Composable
-fun ExcludedAppsDialog(
+fun AppFilterDialog(
     filterMode: String,
     onFilterModeChange: (String) -> Unit,
     excludedApps: Set<String>,

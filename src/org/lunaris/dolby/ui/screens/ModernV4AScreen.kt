@@ -101,7 +101,7 @@ import org.lunaris.dolby.viper.ui.screens.device.DeviceDialog
 import org.lunaris.dolby.viper.ui.screens.main.*
 import org.lunaris.dolby.viper.ui.components.ConfirmDialog
 import org.lunaris.dolby.viper.ui.screens.preset.PresetDialog
-import org.lunaris.dolby.viper.ui.screens.settings.ExcludedAppsDialog
+import org.lunaris.dolby.viper.ui.screens.settings.AppFilterDialog
 import org.lunaris.dolby.viper.ui.screens.settings.SettingsDialog
 import org.lunaris.dolby.viper.ui.screens.status.DriverStatusDialog
 import org.lunaris.dolby.viper.ui.screens.main.DriverStatus
@@ -136,7 +136,7 @@ fun ModernV4AScreen(
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showDebugLog by remember { mutableStateOf(false) }
     var showDeviceDialog by remember { mutableStateOf(false) }
-    var showExcludedAppsDialog by remember { mutableStateOf(false) }
+    var showAppFilterDialog by remember { mutableStateOf(false) }
 
     val listState = rememberLazyListState()
     val showTitle by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
@@ -154,8 +154,8 @@ fun ModernV4AScreen(
     val clearAllProgressStr = stringResource(R.string.preset_clear_all_progress)
     val clearedStr = stringResource(R.string.preset_cleared)
 
-    if (showExcludedAppsDialog) {
-        ExcludedAppsDialog(
+    if (showAppFilterDialog) {
+        AppFilterDialog(
             filterMode = appFilterMode,
             onFilterModeChange = viewModel::setAppFilterMode,
             excludedApps = excludedApps,
@@ -163,7 +163,7 @@ fun ModernV4AScreen(
             onToggleExcluded = viewModel::setAppExcluded,
             onToggleIncluded = viewModel::setAppIncluded,
             loadInstalledApps = viewModel::loadInstalledApps,
-            onDismiss = { showExcludedAppsDialog = false },
+            onDismiss = { showAppFilterDialog = false },
         )
     }
 
@@ -291,7 +291,7 @@ fun ModernV4AScreen(
             aidlModeActive = aidlMode,
             debugModeEnabled = debugMode,
             onGlobalModeChanged = viewModel::toggleGlobalMode,
-            onOpenExcludedApps = { showExcludedAppsDialog = true },
+            onOpenAppFilter = { showAppFilterDialog = true },
             driverStatus = driverStatus,
             appVersionName = appVersionName,
             onAutoStartChanged = viewModel::toggleAutoStart,

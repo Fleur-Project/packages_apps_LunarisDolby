@@ -47,7 +47,7 @@ fun SettingsDialog(
     appVersionName: String,
     onAutoStartChanged: (Boolean) -> Unit,
     onGlobalModeChanged: (Boolean) -> Unit,
-    onOpenExcludedApps: () -> Unit,
+    onOpenAppFilter: () -> Unit,
     onImportPreset: () -> Unit,
     onImportKernel: () -> Unit,
     onDebugUnlocked: () -> Unit,
@@ -106,7 +106,7 @@ fun SettingsDialog(
                                 } else {
                                     stringResource(R.string.settings_app_filter_exclude_summary, excludedAppsCount)
                                 },
-                            onClick = onOpenExcludedApps,
+                            onClick = onOpenAppFilter,
                         )
                     }
                 }
