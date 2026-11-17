@@ -11,7 +11,7 @@ object RootShell {
     private var cachedSuPath: String? = null
 
     @Volatile
-    private var suDetected = false
+    private var suChecked = false
 
     fun exec(
         command: String,
@@ -34,24 +34,32 @@ object RootShell {
 
     fun getSuPath(): String {
         cachedSuPath?.let { return it }
+        if (suChecked) {
+            throw RuntimeException("Root not available: no working su binary found")
+        }
         synchronized(this) {
             cachedSuPath?.let { return it }
+            if (suChecked) {
+                throw RuntimeException("Root not available: no working su binary found")
+            }
             val path = detectSu()
             cachedSuPath = path
-            suDetected = true
-            return path
+            suChecked = true
+            return path ?: throw RuntimeException("Root not available: no working su binary found")
         }
     }
 
-    fun isRootAvailable(): Boolean =
-        try {
+    fun isRootAvailable(): Boolean {
+        if (suChecked) return cachedSuPath != null
+        return try {
             getSuPath()
             true
         } catch (_: Exception) {
             false
         }
+    }
 
-    private fun detectSu(): String {
+    private fun detectSu(): String? {
         if (testSu("su")) {
             FileLogger.i(TAG, "su found via PATH")
             return "su"
@@ -78,8 +86,7 @@ object RootShell {
             }
         }
 
-        FileLogger.e(TAG, "No working su binary found")
-        throw RuntimeException("Root not available: no working su binary found")
+        return null
     }
 
     private fun testSu(path: String): Boolean {
