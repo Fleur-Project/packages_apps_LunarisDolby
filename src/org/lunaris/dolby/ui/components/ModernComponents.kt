@@ -37,8 +37,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.RoundedPolygon
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.utils.*
@@ -52,7 +50,10 @@ fun Modifier.squishable(
     
     val scale by animateFloatAsState(
         targetValue = if (isPressed && enabled) scaleDown else 1f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
         label = "squish_scale"
     )
     
@@ -131,52 +132,18 @@ fun DolbyMainCard(
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    val motion = MaterialTheme.motionScheme
     
     val containerColor by animateColorAsState(
         if (enabled) MaterialTheme.colorScheme.primaryContainer
         else MaterialTheme.colorScheme.surfaceContainerLow,
-        animationSpec = motion.defaultEffectsSpec(),
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "dolby_power_container",
     )
     val contentColor = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer
         else MaterialTheme.colorScheme.onSurface
 
-    val emblemMorph = remember {
-        Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided)
-    }
-    val emblemProgress by animateFloatAsState(
-        targetValue = if (enabled) 1f else 0f,
-        animationSpec = motion.defaultSpatialSpec(),
-        label = "dolby_emblem_morph",
-    )
-    val emblemRotation by animateFloatAsState(
-        targetValue = if (enabled) 0f else -25f,
-        animationSpec = motion.defaultSpatialSpec(),
-        label = "dolby_emblem_rotation",
-    )
-    val emblemScale by animateFloatAsState(
-        targetValue = if (enabled) 1f else 0.94f,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "dolby_emblem_scale",
-    )
-    val emblemColor by animateColorAsState(
-        targetValue = if (enabled) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.surfaceContainerHighest,
-        animationSpec = motion.defaultEffectsSpec(),
-        label = "dolby_emblem_color",
-    )
-    val emblemLogoColor by animateColorAsState(
-        targetValue = if (enabled) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = motion.defaultEffectsSpec(),
-        label = "dolby_emblem_logo_color",
-    )
-
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .squishable(enabled = true, scaleDown = 0.985f),
+        modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
         color = containerColor,
         contentColor = contentColor,
@@ -201,22 +168,16 @@ fun DolbyMainCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .graphicsLayer {
-                            rotationZ = emblemRotation
-                            scaleX = emblemScale
-                            scaleY = emblemScale
-                        }
-                        .clip(MorphShape(emblemMorph, emblemProgress))
-                        .background(emblemColor),
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (enabled) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(72.dp),
                 ) {
                     DolbyLogo(
                         modifier = Modifier.padding(16.dp),
-                        leftColor = emblemLogoColor,
-                        rightColor = emblemLogoColor,
+                        leftColor = if (enabled) MaterialTheme.colorScheme.onPrimary else contentColor,
+                        rightColor = if (enabled) MaterialTheme.colorScheme.onPrimary else contentColor,
                     )
                 }
                 AnimatedWaveformBanner(
@@ -279,7 +240,6 @@ fun ModernSettingsCard(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    badgePolygon: RoundedPolygon = MaterialShapes.Cookie9Sided,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
@@ -295,22 +255,19 @@ fun ModernSettingsCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.padding(bottom = 16.dp)
             ) {
-                val badgeMorph = remember(badgePolygon) {
-                    Morph(MaterialShapes.Circle, badgePolygon)
-                }
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(MorphShape(badgeMorph, 1f))
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center
+                Surface(
+                    modifier = Modifier.size(40.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.primaryContainer
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(22.dp)
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
                 }
                 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -469,25 +426,14 @@ fun ModernSettingSlider(
                 modifier = Modifier.weight(1f)
             )
             
-            val isNonZero = value > 0
-            val pillBg by animateColorAsState(
-                targetValue = if (isNonZero) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHighest,
-                animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
-                label = "slider_pill_bg"
-            )
-            val pillText by animateColorAsState(
-                targetValue = if (isNonZero) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-                animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
-                label = "slider_pill_text"
-            )
             Surface(
                 shape = CircleShape,
-                color = pillBg
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
                 Text(
                     text = valueLabel(value),
                     style = MaterialTheme.typography.labelLargeEmphasized,
-                    color = pillText,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                 )
             }
@@ -560,93 +506,60 @@ fun ModernSettingSelector(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            if (entryList.size in 2..4) {
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth()
+            Box {
+                Surface(
+                    onClick = { 
+                        scope.launch {
+                            haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TICK)
+                        }
+                        expanded = true 
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelLargeEmphasized,
+                            modifier = Modifier.weight(1f),
+                            color = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer
+                        )
+                    }
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
                 ) {
                     entryList.forEachIndexed { index, entry ->
                         val value = valueList.getOrNull(index)?.toIntOrNull() ?: return@forEachIndexed
-                        val isSelected = value == currentValue
-                        SegmentedButton(
-                            selected = isSelected,
+                        DropdownMenuItem(
+                            text = { 
+                                Text(
+                                    entry,
+                                    color = if (value == currentValue) 
+                                        MaterialTheme.colorScheme.primary 
+                                    else MaterialTheme.colorScheme.onSurface
+                                )
+                            },
                             onClick = {
                                 scope.launch {
                                     haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
                                 }
+                                expanded = false
                                 onValueChange(value)
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = entryList.size),
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                inactiveContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                                inactiveContentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        ) {
-                            Text(
-                                text = entry,
-                                style = if (isSelected) MaterialTheme.typography.labelMediumEmphasized
-                                    else MaterialTheme.typography.labelMedium
-                            )
-                        }
-                    }
-                }
-            } else {
-                Box {
-                    Surface(
-                        onClick = { 
-                            scope.launch {
-                                haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.TICK)
                             }
-                            expanded = true 
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelLargeEmphasized,
-                                modifier = Modifier.weight(1f),
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Icon(
-                                imageVector = Icons.Default.ArrowDropDown,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        entryList.forEachIndexed { index, entry ->
-                            val value = valueList.getOrNull(index)?.toIntOrNull() ?: return@forEachIndexed
-                            DropdownMenuItem(
-                                text = { 
-                                    Text(
-                                        entry,
-                                        color = if (value == currentValue) 
-                                            MaterialTheme.colorScheme.primary 
-                                        else MaterialTheme.colorScheme.onSurface
-                                    )
-                                },
-                                onClick = {
-                                    scope.launch {
-                                        haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
-                                    }
-                                    expanded = false
-                                    onValueChange(value)
-                                }
-                            )
-                        }
+                        )
                     }
                 }
             }
@@ -665,22 +578,19 @@ fun ModernConfirmDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            val dialogMorph = remember {
-                Morph(MaterialShapes.Circle, MaterialShapes.PuffyDiamond)
-            }
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(MorphShape(dialogMorph, 1f))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.size(56.dp),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         },
         title = {
@@ -706,7 +616,7 @@ fun ModernConfirmDialog(
                     contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
-                Text(stringResource(android.R.string.ok))
+                Text(stringResource(android.R.string.yes))
             }
         },
         dismissButton = {
@@ -717,7 +627,7 @@ fun ModernConfirmDialog(
                     contentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
-                Text(stringResource(android.R.string.cancel))
+                Text(stringResource(android.R.string.no))
             }
         },
         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

@@ -156,14 +156,6 @@ private fun ModernDolbySettingsContent(
     bottomPadding: Dp,
     modifier: Modifier = Modifier
 ) {
-    val motion = MaterialTheme.motionScheme
-    val enterAnim = remember(motion) {
-        fadeIn(motion.fastEffectsSpec()) + expandVertically(motion.defaultSpatialSpec())
-    }
-    val exitAnim = remember(motion) {
-        fadeOut(motion.fastEffectsSpec()) + shrinkVertically(motion.defaultSpatialSpec())
-    }
-
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         state = listState,
@@ -192,8 +184,8 @@ private fun ModernDolbySettingsContent(
         item {
             AnimatedVisibility(
                 visible = state.settings.enabled,
-                enter = enterAnim,
-                exit = exitAnim
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
                 ModernProfileSelector(
                     currentProfile = state.settings.currentProfile,
@@ -205,8 +197,8 @@ private fun ModernDolbySettingsContent(
         item {
             AnimatedVisibility(
                 visible = state.settings.enabled && state.settings.currentProfile != 0,
-                enter = enterAnim,
-                exit = exitAnim
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
                 ModernIeqSelector(
                     currentPreset = state.profileSettings.ieqPreset,
@@ -218,8 +210,8 @@ private fun ModernDolbySettingsContent(
         item {
             AnimatedVisibility(
                 visible = state.settings.enabled,
-                enter = enterAnim,
-                exit = exitAnim
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
                 AppProfileSettingsCard(
                     onManageClick = { navController.navigate("app_profiles") }

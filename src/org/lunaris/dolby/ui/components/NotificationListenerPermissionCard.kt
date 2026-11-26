@@ -52,12 +52,10 @@ fun NotificationListenerPermissionCard(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val motion = MaterialTheme.motionScheme
-
     AnimatedVisibility(
         visible = !isEnabled,
-        enter = fadeIn(motion.fastEffectsSpec()) + expandVertically(motion.defaultSpatialSpec()),
-        exit = fadeOut(motion.fastEffectsSpec()) + shrinkVertically(motion.defaultSpatialSpec())
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically()
     ) {
         Card(
             modifier = modifier.fillMaxWidth(),

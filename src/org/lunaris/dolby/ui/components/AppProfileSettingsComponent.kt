@@ -10,7 +10,8 @@ package org.lunaris.dolby.ui.components
 import android.content.Context
 import android.content.Intent
 import android.provider.Settings
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -49,13 +50,6 @@ fun AppProfileSettingsCard(
         mutableStateOf(prefs.getBoolean("app_profile_headphone_only", false))
     }
     var showPermissionDialog by remember { mutableStateOf(false) }
-    val motion = MaterialTheme.motionScheme
-    val enterAnim = remember(motion) {
-        fadeIn(motion.fastEffectsSpec()) + expandVertically(motion.defaultSpatialSpec())
-    }
-    val exitAnim = remember(motion) {
-        fadeOut(motion.fastEffectsSpec()) + shrinkVertically(motion.defaultSpatialSpec())
-    }
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -156,11 +150,7 @@ fun AppProfileSettingsCard(
                 )
             }
 
-            AnimatedVisibility(
-                visible = isDeviceStateMemoryEnabled,
-                enter = enterAnim,
-                exit = exitAnim
-            ) {
+            AnimatedVisibility(visible = isDeviceStateMemoryEnabled) {
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -178,11 +168,7 @@ fun AppProfileSettingsCard(
                 }
             }
             
-            AnimatedVisibility(
-                visible = isEnabled,
-                enter = enterAnim,
-                exit = exitAnim
-            ) {
+            AnimatedVisibility(visible = isEnabled) {
                 Column {
                     Spacer(modifier = Modifier.height(12.dp))
                     

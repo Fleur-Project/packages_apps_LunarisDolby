@@ -42,20 +42,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BugReport
-import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material.icons.filled.SpeakerGroup
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.SpatialAudio
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -81,7 +77,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.Morph
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -91,7 +86,6 @@ import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.ui.components.DolbyPageHeading
 import org.lunaris.dolby.ui.components.DolbyTopAppBar
-import org.lunaris.dolby.ui.components.MorphShape
 import org.lunaris.dolby.ui.components.squishable
 import org.lunaris.dolby.utils.HapticFeedbackHelper
 import org.lunaris.dolby.utils.rememberHapticFeedback
@@ -377,7 +371,7 @@ fun ModernV4AScreen(
         val targetAlpha = if (state.masterEnable) 1f else 0.45f
         val alpha by animateFloatAsState(
             targetValue = targetAlpha,
-            animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+            animationSpec = tween(durationMillis = 200),
             label = "effectListAlpha",
         )
 
@@ -410,64 +404,32 @@ fun ModernV4AScreen(
                 )
             }
 
-            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { V4ADomainHeader(stringResource(R.string.v4a_domain_dynamics)) } }
+            // Virtualized effect section items
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { MasterLimiterRows(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { PlaybackGainSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { LUFSTargetingSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { MultibandCompressorSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { FetCompressorSection(state, viewModel) } }
-
-            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { V4ADomainHeader(stringResource(R.string.v4a_domain_frequency)) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { DdcSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { SpectrumExtensionSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { EqualizerSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { DynamicEqSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { ConvolverSection(state, viewModel) } }
-
-            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { V4ADomainHeader(stringResource(R.string.v4a_domain_spatial)) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { FieldSurroundSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { DiffSurroundSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { StereoImagerSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { HeadphoneSurroundSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { ReverberationSection(state, viewModel) } }
-
-            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { V4ADomainHeader(stringResource(R.string.v4a_domain_analog)) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { DynamicSystemSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { TubeSimulatorSection(state, viewModel) } }
-            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AnalogXSection(state, viewModel) } }
-
-            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { V4ADomainHeader(stringResource(R.string.v4a_domain_viper_signature)) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { PsychoacousticBassSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { ViperBassSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { ViperBassMonoSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { ViperClaritySection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AuditoryProtectionSection(state, viewModel) } }
+            item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { AnalogXSection(state, viewModel) } }
             item { Box(Modifier.graphicsLayer { this.alpha = alpha }) { SpeakerOptSection(state, viewModel) } }
         }
-    }
-}
-
-@Composable
-private fun V4ADomainHeader(
-    title: String,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMediumEmphasized,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        HorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
-        )
     }
 }
 
@@ -481,7 +443,6 @@ fun V4AMainCard(
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    val motion = MaterialTheme.motionScheme
 
     val containerColor by animateColorAsState(
         targetValue = if (enabled) {
@@ -489,7 +450,7 @@ fun V4AMainCard(
         } else {
             MaterialTheme.colorScheme.surfaceContainerLow
         },
-        animationSpec = motion.fastEffectsSpec(),
+        animationSpec = tween(durationMillis = 200),
         label = "v4a_master_container",
     )
     val contentColor = if (enabled) {
@@ -497,20 +458,6 @@ fun V4AMainCard(
     } else {
         MaterialTheme.colorScheme.onSurface
     }
-
-    val emblemMorph = remember {
-        Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided)
-    }
-    val emblemProgress by animateFloatAsState(
-        targetValue = if (enabled) 1f else 0f,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "v4a_emblem_morph",
-    )
-    val emblemColor by animateColorAsState(
-        targetValue = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "v4a_emblem_bg",
-    )
 
     Surface(
         modifier = modifier
@@ -540,24 +487,26 @@ fun V4AMainCard(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(MorphShape(emblemMorph, emblemProgress))
-                        .background(emblemColor),
-                    contentAlignment = Alignment.Center,
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = if (enabled) MaterialTheme.colorScheme.primary
+                    else MaterialTheme.colorScheme.surfaceContainerHigh,
+                    modifier = Modifier.size(72.dp),
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_qs_master),
-                        contentDescription = null,
-                        tint = if (enabled) MaterialTheme.colorScheme.onPrimary else contentColor,
-                        modifier = Modifier.size(32.dp),
-                    )
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_qs_master),
+                            contentDescription = null,
+                            tint = if (enabled) MaterialTheme.colorScheme.onPrimary
+                            else contentColor,
+                            modifier = Modifier.size(32.dp),
+                        )
+                    }
                 }
 
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.v4a_title),
@@ -565,58 +514,46 @@ fun V4AMainCard(
                         color = contentColor,
                     )
 
+                    // Active audio device display
                     if (activeDeviceName.isNotEmpty()) {
-                        Surface(
-                            shape = CircleShape,
-                            color = if (enabled) MaterialTheme.colorScheme.surface.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        val deviceIndicatorColor = if (enabled) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
-                            ) {
-                                val isSpeaker = activeDeviceName.contains("Speaker", ignoreCase = true)
-                                Icon(
-                                    imageVector = if (isSpeaker) Icons.Default.Speaker else Icons.Default.Headphones,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(14.dp),
-                                    tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Text(
-                                    text = activeDeviceName,
-                                    style = MaterialTheme.typography.labelSmallEmphasized,
-                                    color = if (enabled) {
-                                        MaterialTheme.colorScheme.onPrimaryContainer
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
+                            Canvas(modifier = Modifier.size(8.dp)) {
+                                drawCircle(deviceIndicatorColor)
                             }
+                            Text(
+                                text = activeDeviceName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (enabled) {
+                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            )
                         }
                     }
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        val statusDotColor = if (driverStatus.installed) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-                        Canvas(modifier = Modifier.size(7.dp)) {
-                            drawCircle(statusDotColor)
-                        }
-                        Text(
-                            text = if (driverStatus.installed) {
-                                stringResource(R.string.v4a_driver_connected)
-                            } else {
-                                stringResource(R.string.v4a_driver_disconnected)
-                            },
-                            style = MaterialTheme.typography.labelSmall,
-                            color = if (driverStatus.installed) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.error
-                            },
-                        )
-                    }
+                    // Driver status text
+                    Text(
+                        text = if (driverStatus.installed) {
+                            stringResource(R.string.v4a_driver_connected)
+                        } else {
+                            stringResource(R.string.v4a_driver_disconnected)
+                        },
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (driverStatus.installed) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outline
+                        },
+                    )
                 }
             }
 

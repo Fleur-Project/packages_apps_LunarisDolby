@@ -19,11 +19,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -47,8 +45,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.RoundedPolygon
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.data.autoeq.*
@@ -333,19 +329,17 @@ private fun ModernEqualizerContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     ViewModeTile(
-                        title = stringResource(R.string.dolby_eq_view_curve),
-                        icon = Icons.AutoMirrored.Filled.ShowChart,
+                        title = "Curve",
+                        icon = Icons.Default.ShowChart,
                         isSelected = viewMode == EqualizerViewMode.CURVE,
-                        badgePolygon = MaterialShapes.PuffyDiamond,
                         onClick = { onViewModeChange(EqualizerViewMode.CURVE) },
                         modifier = Modifier.weight(1f)
                     )
                     
                     ViewModeTile(
-                        title = stringResource(R.string.dolby_eq_view_sliders),
+                        title = "Sliders",
                         icon = Icons.Default.Tune,
                         isSelected = viewMode == EqualizerViewMode.SLIDERS,
-                        badgePolygon = MaterialShapes.Cookie4Sided,
                         onClick = { onViewModeChange(EqualizerViewMode.SLIDERS) },
                         modifier = Modifier.weight(1f)
                     )
@@ -353,12 +347,12 @@ private fun ModernEqualizerContent(
             }
         }
 
-        val motion = MaterialTheme.motionScheme
+        val viewTransitionSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Float>()
         AnimatedContent(
             targetState = viewMode,
             transitionSpec = {
-                (fadeIn(animationSpec = motion.fastEffectsSpec()) + scaleIn(animationSpec = motion.defaultSpatialSpec(), initialScale = 0.96f)) togetherWith
-                (fadeOut(animationSpec = motion.fastEffectsSpec()) + scaleOut(animationSpec = motion.defaultSpatialSpec(), targetScale = 0.96f))
+                fadeIn(animationSpec = viewTransitionSpec) togetherWith
+                fadeOut(animationSpec = viewTransitionSpec)
             },
             label = "equalizer_view_transition"
         ) { mode ->
@@ -422,8 +416,8 @@ private fun CurveViewContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (canEdit) stringResource(R.string.dolby_eq_interactive_title)
-                          else stringResource(R.string.dolby_eq_interactive_readonly_title),
+                    text = if (canEdit) "Interactive Frequency Response" 
+                          else "Frequency Response (Read-only)",
                     style = MaterialTheme.typography.titleMediumEmphasized,
                     color = if (canEdit) MaterialTheme.colorScheme.onSurface
                           else MaterialTheme.colorScheme.onSurfaceVariant
@@ -434,7 +428,7 @@ private fun CurveViewContent(
                           else MaterialTheme.colorScheme.errorContainer
                 ) {
                     Text(
-                        text = stringResource(R.string.dolby_eq_bands_count, state.bandMode.bandCount),
+                        text = "${state.bandMode.bandCount} bands",
                         style = MaterialTheme.typography.labelMediumEmphasized,
                         color = if (canEdit) MaterialTheme.colorScheme.onSecondaryContainer
                               else MaterialTheme.colorScheme.onErrorContainer,
@@ -444,9 +438,9 @@ private fun CurveViewContent(
             }
             Text(
                 text = if (canEdit) 
-                    stringResource(R.string.dolby_eq_drag_hint, getFrequencyRange(state.bandGains))
+                    "Drag the control points to adjust gain (±15 dB) • ${getFrequencyRange(state.bandGains)}"
                 else
-                    stringResource(R.string.dolby_eq_readonly_desc),
+                    "Read-only view • Band mode mismatch",
                 style = MaterialTheme.typography.bodySmall,
                 color = if (canEdit) MaterialTheme.colorScheme.onSurfaceVariant
                       else MaterialTheme.colorScheme.error,
@@ -720,35 +714,17 @@ private fun BandTunerCard(
                            else MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
-                val tunerPillBg by animateColorAsState(
-                    targetValue = when {
-                        !enabled -> MaterialTheme.colorScheme.surfaceContainerHighest
-                        sliderValue > 0.1f -> MaterialTheme.colorScheme.primaryContainer
-                        sliderValue < -0.1f -> MaterialTheme.colorScheme.secondaryContainer
-                        else -> MaterialTheme.colorScheme.surfaceContainerHighest
-                    },
-                    animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
-                    label = "tuner_gain_pill_bg"
-                )
-                val tunerPillText by animateColorAsState(
-                    targetValue = when {
-                        !enabled -> MaterialTheme.colorScheme.onSurfaceVariant
-                        sliderValue > 0.1f -> MaterialTheme.colorScheme.onPrimaryContainer
-                        sliderValue < -0.1f -> MaterialTheme.colorScheme.onSecondaryContainer
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
-                    label = "tuner_gain_pill_text"
-                )
                 Surface(
-                    shape = CircleShape,
-                    color = tunerPillBg,
-                    contentColor = tunerPillText
+                    shape = MaterialTheme.shapes.small,
+                    color = if (enabled) MaterialTheme.colorScheme.primaryContainer
+                           else MaterialTheme.colorScheme.surfaceContainerHighest
                 ) {
                     Text(
                         text = formatGain(sliderValue),
                         style = MaterialTheme.typography.labelLargeEmphasized,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer
+                               else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
                     )
                 }
             }
@@ -790,12 +766,11 @@ private fun BandTunerCard(
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 BandAdjustButton(
                     label = stringResource(R.string.band_tuner_decrement),
                     enabled = enabled && band.gain > -150,
-                    shape = RoundedCornerShape(topStart = 24.dp, bottomStart = 24.dp, topEnd = 8.dp, bottomEnd = 8.dp),
                     onClick = {
                         val newGain = (band.gain - 1).coerceAtLeast(-150)
                         sliderValue = newGain / 10f
@@ -806,7 +781,6 @@ private fun BandTunerCard(
                 BandAdjustButton(
                     label = stringResource(R.string.band_tuner_reset),
                     enabled = enabled && band.gain != 0,
-                    shape = RoundedCornerShape(8.dp),
                     onClick = {
                         sliderValue = 0f
                         onGainChange(index, 0)
@@ -816,7 +790,6 @@ private fun BandTunerCard(
                 BandAdjustButton(
                     label = stringResource(R.string.band_tuner_increment),
                     enabled = enabled && band.gain < 150,
-                    shape = RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp, topEnd = 24.dp, bottomEnd = 24.dp),
                     onClick = {
                         val newGain = (band.gain + 1).coerceAtMost(150)
                         sliderValue = newGain / 10f
@@ -870,7 +843,6 @@ private fun BandStepButton(
 private fun BandAdjustButton(
     label: String,
     enabled: Boolean,
-    shape: androidx.compose.ui.graphics.Shape = MaterialTheme.shapes.extraLarge,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -887,15 +859,16 @@ private fun BandAdjustButton(
         enabled = enabled,
         modifier = modifier
             .height(48.dp)
-            .squishable(enabled = enabled, scaleDown = 0.94f),
-        shape = shape,
+            .squishable(enabled = enabled, scaleDown = 0.93f),
+        shape = MaterialTheme.shapes.extraLarge,
         color = if (enabled) MaterialTheme.colorScheme.secondaryContainer
                else MaterialTheme.colorScheme.surfaceContainerHighest
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.labelLargeEmphasized,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Medium,
                 color = if (enabled) MaterialTheme.colorScheme.onSecondaryContainer
                        else MaterialTheme.colorScheme.outline
             )
@@ -922,44 +895,12 @@ private fun ViewModeTile(
     title: String,
     icon: ImageVector,
     isSelected: Boolean,
-    badgePolygon: RoundedPolygon,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    val motion = MaterialTheme.motionScheme
-
-    val cornerRadius by animateDpAsState(
-        targetValue = if (isSelected) 28.dp else 16.dp,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "view_mode_corner"
-    )
-    val containerColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "view_mode_container"
-    )
-    val contentColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.onPrimaryContainer
-        else
-            MaterialTheme.colorScheme.onSurface,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "view_mode_content"
-    )
-    val badgeMorph = remember(badgePolygon) {
-        Morph(MaterialShapes.Circle, badgePolygon)
-    }
-    val morphProgress by animateFloatAsState(
-        targetValue = if (isSelected) 1f else 0f,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "view_mode_badge_morph"
-    )
-
+    
     Surface(
         onClick = {
             scope.launch {
@@ -969,10 +910,19 @@ private fun ViewModeTile(
         },
         modifier = modifier
             .height(72.dp)
-            .squishable(enabled = true, scaleDown = 0.94f),
-        color = containerColor,
-        contentColor = contentColor,
-        shape = RoundedCornerShape(cornerRadius),
+            .squishable(enabled = true, scaleDown = 0.93f),
+        color = if (isSelected)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = if (isSelected)
+            MaterialTheme.colorScheme.onPrimaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        shape = if (isSelected)
+            MaterialTheme.shapes.extraLarge
+        else
+            MaterialTheme.shapes.large,
         border = tileSelectionBorder(isSelected)
     ) {
         Row(
@@ -982,27 +932,28 @@ private fun ViewModeTile(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Start
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(MorphShape(badgeMorph, morphProgress))
-                    .background(
-                        if (isSelected)
-                            MaterialTheme.colorScheme.primary
-                        else
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                    ),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.size(40.dp),
+                shape = if (isSelected)
+                    MaterialTheme.shapes.extraLarge
+                else
+                    MaterialTheme.shapes.medium,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHighest
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (isSelected)
-                        MaterialTheme.colorScheme.onPrimary
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(22.dp)
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.width(12.dp))
@@ -1011,7 +962,10 @@ private fun ViewModeTile(
                 text = title,
                 style = if (isSelected) MaterialTheme.typography.titleMediumEmphasized
                     else MaterialTheme.typography.titleMedium,
-                color = contentColor
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    MaterialTheme.colorScheme.onSurface
             )
         }
     }
@@ -1023,6 +977,9 @@ private fun BandModeSelector(
     onModeChange: (BandMode) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = rememberHapticFeedback()
+    val scope = rememberCoroutineScope()
+    
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -1044,18 +1001,20 @@ private fun BandModeSelector(
                 modifier = Modifier.padding(bottom = 12.dp)
             )
             
-            val modes = BandMode.values()
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                modes.forEachIndexed { index, mode ->
+                BandMode.values().forEach { mode ->
                     BandModeTile(
                         mode = mode,
                         isSelected = currentMode == mode,
-                        isFirst = index == 0,
-                        isLast = index == modes.lastIndex,
-                        onClick = { onModeChange(mode) },
+                        onClick = {
+                            scope.launch {
+                                haptic.performHaptic(HapticFeedbackHelper.HapticIntensity.CLICK)
+                            }
+                            onModeChange(mode)
+                        },
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -1068,62 +1027,12 @@ private fun BandModeSelector(
 private fun BandModeTile(
     mode: BandMode,
     isSelected: Boolean,
-    isFirst: Boolean,
-    isLast: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    val motion = MaterialTheme.motionScheme
-
-    val topStart by animateDpAsState(
-        targetValue = if (isSelected) 26.dp else if (isFirst) 22.dp else 8.dp,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "band_corner_ts"
-    )
-    val bottomStart by animateDpAsState(
-        targetValue = if (isSelected) 26.dp else if (isFirst) 22.dp else 8.dp,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "band_corner_bs"
-    )
-    val topEnd by animateDpAsState(
-        targetValue = if (isSelected) 26.dp else if (isLast) 22.dp else 8.dp,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "band_corner_te"
-    )
-    val bottomEnd by animateDpAsState(
-        targetValue = if (isSelected) 26.dp else if (isLast) 22.dp else 8.dp,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "band_corner_be"
-    )
-    val shape = RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
-
-    val containerColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
-            else MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "band_container_color"
-    )
-    val contentColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-            else MaterialTheme.colorScheme.onSurface,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "band_content_color"
-    )
-    val badgeColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
-            else MaterialTheme.colorScheme.surfaceContainerHighest,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "band_badge_color"
-    )
-    val badgeTextColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimary
-            else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "band_badge_text_color"
-    )
-
+    
     Surface(
         onClick = {
             scope.launch {
@@ -1132,40 +1041,62 @@ private fun BandModeTile(
             onClick()
         },
         modifier = modifier
-            .height(82.dp)
-            .squishable(enabled = true, scaleDown = 0.94f),
-        color = containerColor,
-        contentColor = contentColor,
-        shape = shape,
+            .height(80.dp)
+            .squishable(enabled = true, scaleDown = 0.93f),
+        color = if (isSelected)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+        contentColor = if (isSelected)
+            MaterialTheme.colorScheme.onPrimaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        shape = if (isSelected)
+            MaterialTheme.shapes.extraLarge
+        else
+            MaterialTheme.shapes.large,
         border = tileSelectionBorder(isSelected)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(10.dp),
+                .padding(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Surface(
-                modifier = Modifier.size(34.dp),
-                shape = CircleShape,
-                color = badgeColor,
-                contentColor = badgeTextColor
+                modifier = Modifier.size(32.dp),
+                shape = if (isSelected)
+                    MaterialTheme.shapes.extraLarge
+                else
+                    MaterialTheme.shapes.small,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.surfaceContainerHighest
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(
                         text = mode.value,
-                        style = MaterialTheme.typography.labelLargeEmphasized
+                        style = MaterialTheme.typography.labelLargeEmphasized,
+                        color = if (isSelected)
+                            MaterialTheme.colorScheme.onPrimary
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
             
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
             
             Text(
                 text = mode.displayName,
                 style = if (isSelected) MaterialTheme.typography.labelSmallEmphasized
                     else MaterialTheme.typography.labelSmall,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
             )
         }
@@ -1183,13 +1114,6 @@ fun ModernPresetSelector(
     var expanded by remember { mutableStateOf(false) }
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
-    val isUser = currentPreset.isUserDefined
-    val presetPolygon = remember(isUser) {
-        if (isUser) MaterialShapes.Sunny else MaterialShapes.Cookie9Sided
-    }
-    val presetMorph = remember(presetPolygon) {
-        Morph(MaterialShapes.Circle, presetPolygon)
-    }
 
     Column(modifier = modifier.padding(20.dp)) {
         EqualizerSectionHeader(
@@ -1210,7 +1134,7 @@ fun ModernPresetSelector(
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true),
+                    .menuAnchor(),
                 shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh
             ) {
@@ -1223,34 +1147,21 @@ fun ModernPresetSelector(
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                         modifier = Modifier.weight(1f)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(MorphShape(presetMorph, 1f))
-                                .background(
-                                    if (isUser)
-                                        MaterialTheme.colorScheme.primaryContainer
-                                    else
-                                        MaterialTheme.colorScheme.secondaryContainer
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        if (currentPreset.isUserDefined) {
                             Icon(
-                                imageVector = if (isUser) Icons.Default.Person else Icons.Default.LibraryMusic,
+                                imageVector = Icons.Default.Person,
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
-                                tint = if (isUser)
-                                    MaterialTheme.colorScheme.onPrimaryContainer
-                                else
-                                    MaterialTheme.colorScheme.onSecondaryContainer
+                                tint = MaterialTheme.colorScheme.primary
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
                         }
                         Text(
                             text = currentPreset.name,
-                            style = MaterialTheme.typography.bodyLargeEmphasized,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -1263,7 +1174,6 @@ fun ModernPresetSelector(
                 onDismissRequest = { expanded = false }
             ) {
                 presets.forEach { preset ->
-                    val isCurrent = preset.name == currentPreset.name
                     DropdownMenuItem(
                         text = { 
                             Row(
@@ -1271,44 +1181,15 @@ fun ModernPresetSelector(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                ) {
-                                    val itemPolygon = if (preset.isUserDefined) MaterialShapes.Sunny else MaterialShapes.Cookie9Sided
-                                    Box(
-                                        modifier = Modifier
-                                            .size(28.dp)
-                                            .clip(MorphShape(remember(itemPolygon) { Morph(MaterialShapes.Circle, itemPolygon) }, 1f))
-                                            .background(
-                                                if (isCurrent)
-                                                    MaterialTheme.colorScheme.primaryContainer
-                                                else
-                                                    MaterialTheme.colorScheme.surfaceContainerHighest
-                                            ),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Icon(
-                                            imageVector = if (preset.isUserDefined) Icons.Default.Person else Icons.Default.LibraryMusic,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(16.dp),
-                                            tint = if (isCurrent)
-                                                MaterialTheme.colorScheme.onPrimaryContainer
-                                            else
-                                                MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    }
-                                    Text(
-                                        preset.name,
-                                        style = if (isCurrent) MaterialTheme.typography.bodyLargeEmphasized else MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                }
-                                if (isCurrent) {
+                                Text(
+                                    preset.name,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                if (preset.isUserDefined) {
                                     Icon(
-                                        imageVector = Icons.Default.Check,
+                                        imageVector = Icons.Default.Person,
                                         contentDescription = null,
-                                        modifier = Modifier.size(18.dp),
+                                        modifier = Modifier.size(16.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -1340,33 +1221,10 @@ fun ModernEqualizerBand(
     val haptic = rememberHapticFeedback()
     val scope = rememberCoroutineScope()
     var lastHapticValue by remember { mutableIntStateOf((gain / 10f).toInt()) }
-    val motion = MaterialTheme.motionScheme
 
     LaunchedEffect(gain) {
         lastHapticValue = (gain / 10f).toInt()
     }
-
-    val gainFloat = sliderValue
-    val pillColor by animateColorAsState(
-        targetValue = when {
-            !enabled -> MaterialTheme.colorScheme.surfaceContainerHighest
-            gainFloat > 0.1f -> MaterialTheme.colorScheme.primaryContainer
-            gainFloat < -0.1f -> MaterialTheme.colorScheme.secondaryContainer
-            else -> MaterialTheme.colorScheme.surfaceContainerHighest
-        },
-        animationSpec = motion.fastEffectsSpec(),
-        label = "band_gain_pill_color"
-    )
-    val pillTextColor by animateColorAsState(
-        targetValue = when {
-            !enabled -> MaterialTheme.colorScheme.onSurfaceVariant
-            gainFloat > 0.1f -> MaterialTheme.colorScheme.onPrimaryContainer
-            gainFloat < -0.1f -> MaterialTheme.colorScheme.onSecondaryContainer
-            else -> MaterialTheme.colorScheme.onSurfaceVariant
-        },
-        animationSpec = motion.fastEffectsSpec(),
-        label = "band_gain_pill_text_color"
-    )
 
     Column(
         modifier = modifier
@@ -1376,13 +1234,15 @@ fun ModernEqualizerBand(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Surface(
-            shape = CircleShape,
-            color = pillColor
+            shape = MaterialTheme.shapes.small,
+            color = if (enabled) MaterialTheme.colorScheme.primaryContainer
+                   else MaterialTheme.colorScheme.surfaceContainerHighest
         ) {
             Text(
                 text = "%.1f".format(sliderValue),
                 style = MaterialTheme.typography.labelMediumEmphasized,
-                color = pillTextColor,
+                color = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer
+                       else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
             )
         }
@@ -1441,7 +1301,8 @@ fun ModernEqualizerBand(
         )
         Text(
             text = if (frequency >= 1000) "${frequency / 1000}k" else "$frequency",
-            style = MaterialTheme.typography.labelSmallEmphasized,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Medium,
             color = if (enabled) MaterialTheme.colorScheme.onSurface
                    else MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -1546,22 +1407,19 @@ private fun SavePresetDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            val saveMorph = remember {
-                Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided)
-            }
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(MorphShape(saveMorph, 1f))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+            Surface(
+                modifier = Modifier.size(56.dp),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.primaryContainer
             ) {
-                Icon(
-                    imageVector = Icons.Default.Save,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Default.Save,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
             }
         },
         title = {
@@ -1669,25 +1527,6 @@ private fun AutoEqSelectionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        icon = {
-            val headphonesMorph = remember {
-                Morph(MaterialShapes.Circle, MaterialShapes.Sunny)
-            }
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(MorphShape(headphonesMorph, 1f))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Headphones,
-                    contentDescription = null,
-                    modifier = Modifier.size(28.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        },
         title = {
             Text(
                 text = stringResource(id = R.string.dolby_autoeq_title),

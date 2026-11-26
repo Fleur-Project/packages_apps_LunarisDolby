@@ -591,25 +591,8 @@
     <string name="v4a_tab_title">V4A</string>
     <string name="v4a_title">ViPER4Android</string>
     <string name="v4a_subtitle">Advanced DSP audio effects</string>
+    <string name="v4a_master_desc">Master audio DSP processing switch</string>
     <string name="v4a_driver_connected">Driver connected</string>
     <string name="v4a_driver_disconnected">Driver disconnected</string>
-    <string name="v4a_domain_dynamics">Dynamics &amp; Loudness</string>
-    <string name="v4a_domain_frequency">Frequency &amp; Tone Shaping</string>
-    <string name="v4a_domain_spatial">Spatial &amp; Surround</string>
-    <string name="v4a_domain_analog">Analog Modeling</string>
-    <string name="v4a_domain_viper_signature">ViPER Signature Enhancers</string>
-
-    <!-- Equalizer View Mode & Interactive Graph Strings -->
-    <string name="dolby_eq_view_curve">Curve</string>
-    <string name="dolby_eq_view_sliders">Sliders</string>
-    <string name="dolby_eq_interactive_title">Interactive Frequency Response</string>
-    <string name="dolby_eq_interactive_readonly_title">Frequency Response (Read-only)</string>
-    <string name="dolby_eq_bands_count">%1$d bands</string>
-    <string name="dolby_eq_drag_hint">Drag the control points to adjust gain (±15 dB) • %1$s</string>
-    <string name="dolby_eq_readonly_desc">Read-only view • Band mode mismatch</string>
-
-    <string name="dolby_adv_surround_virtualizer">Surround Virtualizer</string>
-    <string name="dolby_adv_dialogue_enhancement">Dialogue Enhancement</string>
-    <string name="dolby_adv_level_format">Level %1$d</string>
 
 </resources>

@@ -9,10 +9,8 @@
 
 package org.lunaris.dolby.ui.components
 
-import androidx.compose.animation.*
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
@@ -22,14 +20,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.*
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
@@ -39,7 +35,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.Morph
 import kotlinx.coroutines.launch
 import org.lunaris.dolby.R
 import org.lunaris.dolby.utils.HapticFeedbackHelper
@@ -80,7 +75,6 @@ fun ProfileSelector(
                 ProfileTile(
                     title = name,
                     icon = Icons.Rounded.AutoAwesome,
-                    profileId = value,
                     selected = currentProfile == value,
                     onClick = { selectProfile(value) },
                     modifier = Modifier.fillMaxWidth(),
@@ -112,7 +106,6 @@ fun ProfileSelector(
                                         5 -> Icons.Rounded.Coffee
                                         else -> Icons.Rounded.Favorite
                                     },
-                                    profileId = value,
                                     selected = currentProfile == value,
                                     onClick = { selectProfile(value) },
                                     modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -131,40 +124,27 @@ fun ProfileSelector(
 private fun ProfileTile(
     title: String,
     icon: ImageVector,
-    profileId: Int,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     subtitle: String? = null,
 ) {
     val colors = MaterialTheme.colorScheme
-    val motion = MaterialTheme.motionScheme
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    
     val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.96f else 1f,
-        animationSpec = motion.fastSpatialSpec(),
+        targetValue = if (pressed) 0.97f else 1f,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "profile_press",
-    )
-    val targetCorner = when {
-        pressed -> if (selected) 24.dp else 14.dp
-        selected -> 28.dp
-        else -> 16.dp
-    }
-    val cornerRadius by animateDpAsState(
-        targetValue = targetCorner,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "profile_corner",
     )
     val containerColor by animateColorAsState(
         targetValue = if (selected) colors.primary else colors.surfaceContainerHigh,
-        animationSpec = motion.defaultEffectsSpec(),
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "profile_container",
     )
     val contentColor by animateColorAsState(
         targetValue = if (selected) colors.onPrimary else colors.onSurface,
-        animationSpec = motion.defaultEffectsSpec(),
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "profile_content",
     )
 
@@ -177,7 +157,7 @@ private fun ProfileTile(
                 scaleY = scale
             }
             .semantics { role = Role.RadioButton },
-        shape = RoundedCornerShape(cornerRadius),
+        shape = RoundedCornerShape(22.dp),
         color = containerColor,
         contentColor = contentColor,
         interactionSource = interactionSource,
@@ -186,9 +166,9 @@ private fun ProfileTile(
             Row(
                 modifier = Modifier.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                ProfileIcon(icon = icon, profileId = profileId, selected = selected)
+                ProfileIcon(icon, selected)
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(2.dp),
@@ -197,22 +177,22 @@ private fun ProfileTile(
                     Text(
                         subtitle,
                         style = MaterialTheme.typography.bodySmall,
-                        color = if (selected) contentColor.copy(alpha = 0.85f) else colors.onSurfaceVariant,
+                        color = if (selected) contentColor else colors.onSurfaceVariant,
                     )
                 }
                 ProfileSelectionMark(selected)
             }
         } else {
             Column(
-                modifier = Modifier.heightIn(min = 108.dp).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.heightIn(min = 104.dp).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ProfileIcon(icon = icon, profileId = profileId, selected = selected)
+                    ProfileIcon(icon, selected)
                     ProfileSelectionMark(selected)
                 }
                 Text(title, style = MaterialTheme.typography.titleSmallEmphasized)
@@ -222,71 +202,29 @@ private fun ProfileTile(
 }
 
 @Composable
-private fun ProfileIcon(icon: ImageVector, profileId: Int, selected: Boolean) {
-    val motion = MaterialTheme.motionScheme
-    val targetPolygon = remember(profileId) {
-        DolbyExpressiveShapes.profilePolygonFor(profileId)
-    }
-    val iconMorph = remember(profileId) {
-        Morph(MaterialShapes.Circle, targetPolygon)
-    }
-    val morphProgress by animateFloatAsState(
-        targetValue = if (selected) 1f else 0f,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "profile_icon_morph",
-    )
-    val iconScale by animateFloatAsState(
-        targetValue = if (selected) 1f else 0.92f,
-        animationSpec = motion.fastSpatialSpec(),
-        label = "profile_icon_scale",
-    )
-    val badgeColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.18f)
+private fun ProfileIcon(icon: ImageVector, selected: Boolean) {
+    Surface(
+        modifier = Modifier.size(36.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.14f)
             else MaterialTheme.colorScheme.surfaceContainerHighest,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "profile_icon_bg",
-    )
-    val badgeContentColor by animateColorAsState(
-        targetValue = if (selected) MaterialTheme.colorScheme.onPrimary
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimary
             else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = motion.fastEffectsSpec(),
-        label = "profile_icon_tint",
-    )
-
-    Box(
-        modifier = Modifier
-            .size(38.dp)
-            .graphicsLayer {
-                scaleX = iconScale
-                scaleY = iconScale
-            }
-            .clip(MorphShape(iconMorph, morphProgress))
-            .background(badgeColor),
-        contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(20.dp),
-            tint = badgeContentColor,
-        )
+        Box(contentAlignment = Alignment.Center) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(22.dp))
+        }
     }
 }
 
 @Composable
 private fun ProfileSelectionMark(selected: Boolean) {
-    val motion = MaterialTheme.motionScheme
-    Box(Modifier.size(22.dp), contentAlignment = Alignment.Center) {
-        AnimatedVisibility(
-            visible = selected,
-            enter = fadeIn(motion.fastEffectsSpec()) + scaleIn(motion.fastSpatialSpec()),
-            exit = fadeOut(motion.fastEffectsSpec()) + scaleOut(motion.fastSpatialSpec()),
-        ) {
+    Box(Modifier.size(20.dp), contentAlignment = Alignment.Center) {
+        if (selected) {
             Surface(
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.onPrimary,
                 contentColor = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(20.dp),
             ) {
                 Icon(
                     Icons.Rounded.Check,
